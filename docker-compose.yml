@@ -1,0 +1,21 @@
+services:
+  ticketr:
+    image: "postgres"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ticketr
+    volumes:
+      - ticketr_data:/var/lib/postgresql
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: "adminer"
+    ports:
+      - 8000:8080
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+volumes:
+  ticketr_data:
