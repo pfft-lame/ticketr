@@ -14,7 +14,7 @@ import (
 )
 
 const createMovie = `-- name: CreateMovie :one
-insert into
+INSERT INTO
   movies (
     name,
     description,
@@ -25,9 +25,10 @@ insert into
     director,
     status
   )
-values
+VALUES
   ( $1, $2, $3, $4, $5, $6, $7, $8) 
-returning id
+RETURNING 
+  id, name, description, casts, trailer_url, languages, release_date, director, status
 `
 
 type CreateMovieParams struct {
@@ -41,7 +42,19 @@ type CreateMovieParams struct {
 	Status      ReleaseStatus `json:"status"`
 }
 
-func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (uuid.UUID, error) {
+type CreateMovieRow struct {
+	ID          uuid.UUID     `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Casts       []string      `json:"casts"`
+	TrailerUrl  string        `json:"trailer_url"`
+	Languages   []string      `json:"languages"`
+	ReleaseDate time.Time     `json:"release_date"`
+	Director    string        `json:"director"`
+	Status      ReleaseStatus `json:"status"`
+}
+
+func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (CreateMovieRow, error) {
 	row := q.db.QueryRow(ctx, createMovie,
 		arg.Name,
 		arg.Description,
@@ -52,26 +65,85 @@ func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (uuid.
 		arg.Director,
 		arg.Status,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i CreateMovieRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Casts,
+		&i.TrailerUrl,
+		&i.Languages,
+		&i.ReleaseDate,
+		&i.Director,
+		&i.Status,
+	)
+	return i, err
 }
 
-const deleteMovieById = `-- name: DeleteMovieById :exec
-delete from movies
-where id = $1
+const deleteMovieById = `-- name: DeleteMovieById :execrows
+DELETE FROM movies
+WHERE id = $1
 `
 
-func (q *Queries) DeleteMovieById(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteMovieById, id)
-	return err
+func (q *Queries) DeleteMovieById(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteMovieById, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const getAllMovies = `-- name: GetAllMovies :many
+SELECT 
+  name, description, casts, trailer_url, languages, release_date, director, status
+FROM movies
+`
+
+type GetAllMoviesRow struct {
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Casts       []string      `json:"casts"`
+	TrailerUrl  string        `json:"trailer_url"`
+	Languages   []string      `json:"languages"`
+	ReleaseDate time.Time     `json:"release_date"`
+	Director    string        `json:"director"`
+	Status      ReleaseStatus `json:"status"`
+}
+
+func (q *Queries) GetAllMovies(ctx context.Context) ([]GetAllMoviesRow, error) {
+	rows, err := q.db.Query(ctx, getAllMovies)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllMoviesRow
+	for rows.Next() {
+		var i GetAllMoviesRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Description,
+			&i.Casts,
+			&i.TrailerUrl,
+			&i.Languages,
+			&i.ReleaseDate,
+			&i.Director,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getMovieById = `-- name: GetMovieById :one
-select
+SELECT
   id, name, description, casts, trailer_url, languages, release_date, director, status
-from movies
-where id = $1
+FROM movies
+WHERE id = $1
 `
 
 type GetMovieByIdRow struct {
@@ -105,17 +177,17 @@ func (q *Queries) GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdR
 
 const updateMovieById = `-- name: UpdateMovieById :one
 UPDATE movies SET 
-  name = coalesce($2, name),
-  description = coalesce($3, description),
-  casts = coalesce($4, casts),
-  trailer_url = coalesce($5, trailer_url),
-  languages = coalesce($6, languages),
-  release_date = coalesce($7, release_date),
-  director = coalesce($8, director),
-  status = coalesce($9, status),
+  name = COALESCE($2, name),
+  description = COALESCE($3, description),
+  casts = COALESCE($4, casts),
+  trailer_url = COALESCE($5, trailer_url),
+  languages = COALESCE($6, languages),
+  release_date = COALESCE($7, release_date),
+  director = COALESCE($8, director),
+  status = COALESCE($9, status),
   updated_at = NOW()
 WHERE id = $1
-returning
+RETURNING
   name, description, casts, trailer_url, languages, release_date, director, status
 `
 

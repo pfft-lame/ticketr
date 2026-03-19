@@ -32,8 +32,6 @@ type responseValidator struct {
 func (r *responseValidator) Validate(s any) error {
 	err := r.v.Struct(s)
 	if err != nil {
-		// fmt.Println(err)
-		// return nil
 		return apiresponse.ApiError{
 			StatusCode: http.StatusBadRequest,
 			Body:       utils.FormatValidationErrs(err),

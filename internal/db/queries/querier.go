@@ -11,10 +11,21 @@ import (
 )
 
 type Querier interface {
-	CreateMovie(ctx context.Context, arg CreateMovieParams) (uuid.UUID, error)
-	DeleteMovieById(ctx context.Context, id uuid.UUID) error
+	CreateCity(ctx context.Context, arg CreateCityParams) (CreateCityRow, error)
+	CreateMovie(ctx context.Context, arg CreateMovieParams) (CreateMovieRow, error)
+	CreateTheater(ctx context.Context, arg CreateTheaterParams) (CreateTheaterRow, error)
+	DeleteCityById(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteMovieById(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteTheaterById(ctx context.Context, id uuid.UUID) (int64, error)
+	GetAllCities(ctx context.Context) ([]GetAllCitiesRow, error)
+	GetAllMovies(ctx context.Context) ([]GetAllMoviesRow, error)
+	GetAllTheaters(ctx context.Context) ([]GetAllTheatersRow, error)
+	GetCityById(ctx context.Context, id uuid.UUID) (GetCityByIdRow, error)
 	GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdRow, error)
+	GetTheatersByCityId(ctx context.Context, cityID uuid.UUID) ([]GetTheatersByCityIdRow, error)
+	GetTheatersById(ctx context.Context, id uuid.UUID) (GetTheatersByIdRow, error)
 	UpdateMovieById(ctx context.Context, arg UpdateMovieByIdParams) (UpdateMovieByIdRow, error)
+	UpdateTheatreById(ctx context.Context, arg UpdateTheatreByIdParams) (UpdateTheatreByIdRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

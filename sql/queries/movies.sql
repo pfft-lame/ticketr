@@ -12,7 +12,9 @@ INSERT INTO
   )
 VALUES
   ( $1, $2, $3, $4, $5, $6, $7, $8) 
-RETURNING id;
+RETURNING 
+  id, name, description, casts, trailer_url, languages, release_date, director, status;
+
 
 -- name: GetMovieById :one
 SELECT
@@ -20,24 +22,27 @@ SELECT
 FROM movies
 WHERE id = $1;
 
--- name: DeleteMovieById :exec
+
+-- name: DeleteMovieById :execrows
 DELETE FROM movies
 WHERE id = $1;
 
+
 -- name: UpdateMovieById :one
 UPDATE movies SET 
-  name = coalesce(sqlc.narg(name), name),
-  description = coalesce(sqlc.narg(description), description),
-  casts = coalesce(sqlc.narg(casts), casts),
-  trailer_url = coalesce(sqlc.narg(trailer_url), trailer_url),
-  languages = coalesce(sqlc.narg(languages), languages),
-  release_date = coalesce(sqlc.narg(release_date), release_date),
-  director = coalesce(sqlc.narg(director), director),
-  status = coalesce(sqlc.narg(status), status),
+  name = COALESCE(sqlc.narg(name), name),
+  description = COALESCE(sqlc.narg(description), description),
+  casts = COALESCE(sqlc.narg(casts), casts),
+  trailer_url = COALESCE(sqlc.narg(trailer_url), trailer_url),
+  languages = COALESCE(sqlc.narg(languages), languages),
+  release_date = COALESCE(sqlc.narg(release_date), release_date),
+  director = COALESCE(sqlc.narg(director), director),
+  status = COALESCE(sqlc.narg(status), status),
   updated_at = NOW()
 WHERE id = $1
 RETURNING
   name, description, casts, trailer_url, languages, release_date, director, status;
+
 
 -- name: GetAllMovies :many
 SELECT 

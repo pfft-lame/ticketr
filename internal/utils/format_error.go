@@ -32,6 +32,12 @@ func FormatValidationErrs(e error) map[string]string {
 			vals := strings.Split(e.Param(), " ")
 			valStr := strings.Join(vals, ", ")
 			errs[f] = f + " can have following values: " + valStr
+		case "numeric":
+			errs[f] = f + " must be a numeric value"
+		case "len":
+			errs[f] = f + " should have a lenght of " + e.Param()
+		case "uuid4":
+			errs[f] = f + " is not an valid uuid"
 		default:
 			errs[f] = "Invalid value"
 		}

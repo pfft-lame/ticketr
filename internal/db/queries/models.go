@@ -56,6 +56,13 @@ func (ns NullReleaseStatus) Value() (driver.Value, error) {
 	return string(ns.ReleaseStatus), nil
 }
 
+type City struct {
+	ID        uuid.UUID          `json:"id"`
+	City      string             `json:"city"`
+	State     string             `json:"state"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Movie struct {
 	ID          uuid.UUID          `json:"id"`
 	Name        string             `json:"name"`
@@ -66,6 +73,18 @@ type Movie struct {
 	ReleaseDate time.Time          `json:"release_date"`
 	Director    string             `json:"director"`
 	Status      ReleaseStatus      `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	NameTsv     interface{}        `json:"name_tsv"`
+}
+
+type Theater struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	CityID      uuid.UUID          `json:"city_id"`
+	Address     string             `json:"address"`
+	Pincode     string             `json:"pincode"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

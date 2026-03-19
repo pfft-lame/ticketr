@@ -10,18 +10,18 @@ import (
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
 	"ticketr/internal/db/queries"
+	"ticketr/internal/utils"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Service interface {
-	CreateMovie(context.Context, createMovieReq) (uuid.UUID, error)
-	GetMovieById(context.Context, string) (queries.GetMovieByIdRow, error)
-	DeleteMovieById(context.Context, string) error
-	UpdateMovieById(context.Context, updateMovieReq, string) (queries.UpdateMovieByIdRow, error)
+	CreateMovie(ctx context.Context, movie createMovieReq) (queries.CreateMovieRow, error)
+	GetMovieById(ctx context.Context, id string) (queries.GetMovieByIdRow, error)
+	DeleteMovieById(ctx context.Context, id string) error
+	UpdateMovieById(ctx context.Context, movie updateMovieReq, id string) (queries.UpdateMovieByIdRow, error)
 }
 
 type svc struct {
@@ -32,16 +32,16 @@ func NewService(q queries.Querier) Service {
 	return &svc{q}
 }
 
-func (s *svc) CreateMovie(ctx context.Context, movie createMovieReq) (uuid.UUID, error) {
+func (s *svc) CreateMovie(ctx context.Context, movie createMovieReq) (queries.CreateMovieRow, error) {
 	releaseDate, err := time.Parse(time.RFC3339, movie.ReleaseDate)
 	if err != nil {
-		return uuid.UUID{}, apiresponse.ApiError{
+		return queries.CreateMovieRow{}, apiresponse.ApiError{
 			StatusCode: http.StatusBadRequest,
 			Body:       "release_date should be in iso time format",
 		}
 	}
 
-	id, err := s.queries.CreateMovie(ctx, queries.CreateMovieParams{
+	row, err := s.queries.CreateMovie(ctx, queries.CreateMovieParams{
 		Name:        movie.Name,
 		Description: movie.Description,
 		Casts:       movie.Casts,
@@ -54,7 +54,7 @@ func (s *svc) CreateMovie(ctx context.Context, movie createMovieReq) (uuid.UUID,
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return uuid.UUID{}, err
+			return queries.CreateMovieRow{}, err
 		}
 
 		body := make(map[string]string)
@@ -63,19 +63,16 @@ func (s *svc) CreateMovie(ctx context.Context, movie createMovieReq) (uuid.UUID,
 			body["release_date"] = "release_date must be either the values of 'RELEASED', 'UNRELEASED' or 'BLOCKED'"
 		}
 
-		return uuid.UUID{}, apiresponse.ApiError{StatusCode: code, Body: body}
+		return queries.CreateMovieRow{}, apiresponse.ApiError{StatusCode: code, Body: body}
 	}
 
-	return id, nil
+	return row, nil
 }
 
 func (s *svc) GetMovieById(ctx context.Context, id string) (queries.GetMovieByIdRow, error) {
-	uid, err := uuid.Parse(id)
+	uid, err := utils.ValidUUID(id)
 	if err != nil {
-		return queries.GetMovieByIdRow{}, apiresponse.ApiError{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid UUID",
-		}
+		return queries.GetMovieByIdRow{}, err
 	}
 
 	row, err := s.queries.GetMovieById(ctx, uid)
@@ -93,29 +90,30 @@ func (s *svc) GetMovieById(ctx context.Context, id string) (queries.GetMovieById
 }
 
 func (s *svc) DeleteMovieById(ctx context.Context, id string) error {
-	uid, err := uuid.Parse(id)
-	if err != nil {
-		return apiresponse.ApiError{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid UUID",
-		}
-	}
-
-	err = s.queries.DeleteMovieById(ctx, uid)
+	uid, err := utils.ValidUUID(id)
 	if err != nil {
 		return err
+	}
+
+	numRows, err := s.queries.DeleteMovieById(ctx, uid)
+	if err != nil {
+		return err
+	}
+
+	if numRows == 0 {
+		return apiresponse.ApiError{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Invalid movie_id. The specified movie doesn't exists.",
+		}
 	}
 
 	return nil
 }
 
 func (s *svc) UpdateMovieById(ctx context.Context, movie updateMovieReq, id string) (queries.UpdateMovieByIdRow, error) {
-	uid, err := uuid.Parse(id)
+	uid, err := utils.ValidUUID(id)
 	if err != nil {
-		return queries.UpdateMovieByIdRow{}, apiresponse.ApiError{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid UUID",
-		}
+		return queries.UpdateMovieByIdRow{}, err
 	}
 
 	var releaseDate time.Time

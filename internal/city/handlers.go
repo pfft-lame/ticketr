@@ -1,4 +1,4 @@
-package movie
+package city
 
 import (
 	"net/http"
@@ -16,18 +16,17 @@ func NewHandler(s Service) *handler {
 	return &handler{s}
 }
 
-func (h *handler) CreateMovie(c *echo.Context) error {
-	var m createMovieReq
-
-	if err := c.Bind(&m); err != nil {
+func (h *handler) CreateCity(c *echo.Context) error {
+	var city createCityReq
+	if err := c.Bind(&city); err != nil {
 		return err
 	}
 
-	if err := c.Validate(m); err != nil {
+	if err := c.Validate(city); err != nil {
 		return err
 	}
 
-	res, err := h.s.CreateMovie(c.Request().Context(), m)
+	res, err := h.s.CreateCity(c.Request().Context(), city)
 	if err != nil {
 		if _, ok := err.(apiresponse.ApiError); ok {
 			return err
@@ -39,15 +38,15 @@ func (h *handler) CreateMovie(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
 		Success:    true,
 		StatusCode: http.StatusCreated,
-		Message:    "Movie created successfully",
+		Message:    "City created!",
 		Body:       res,
 	})
 }
 
-func (h *handler) GetMovieById(c *echo.Context) error {
+func (h *handler) DeleteCity(c *echo.Context) error {
 	id := c.Param("id")
 
-	res, err := h.s.GetMovieById(c.Request().Context(), id)
+	err := h.s.DeleteCity(c.Request().Context(), id)
 	if err != nil {
 		if _, ok := err.(apiresponse.ApiError); ok {
 			return err
@@ -58,55 +57,43 @@ func (h *handler) GetMovieById(c *echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
 		Success:    true,
-		StatusCode: http.StatusCreated,
-		Body:       res,
-	})
-}
-
-func (h *handler) DeleteMovieById(c *echo.Context) error {
-	id := c.Param("id")
-
-	err := h.s.DeleteMovieById(c.Request().Context(), id)
-	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
-	}
-
-	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
-		Success:    true,
-		StatusCode: http.StatusCreated,
-		Body:       "Movie deleted successfully!",
-	})
-}
-
-func (h *handler) UpdateMovieById(c *echo.Context) error {
-	id := c.Param("id")
-
-	var m updateMovieReq
-	if err := c.Bind(&m); err != nil {
-		return err
-	}
-
-	if err := c.Validate(m); err != nil {
-		return err
-	}
-
-	updatedMovie, err := h.s.UpdateMovieById(c.Request().Context(), m, id)
-	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
-	}
-
-	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
 		StatusCode: http.StatusOK,
+		Message:    "City deleted Successfully!",
+	})
+}
+
+func (h *handler) GetCity(c *echo.Context) error {
+	id := c.Param("id")
+
+	res, err := h.s.GetCityById(c.Request().Context(), id)
+	if err != nil {
+		if _, ok := err.(apiresponse.ApiError); ok {
+			return err
+		}
+
+		return apiresponse.DefaultServerError()
+	}
+
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
 		Success:    true,
-		Message:    "Movie updated successfully!",
-		Body:       updatedMovie,
+		StatusCode: http.StatusOK,
+		Body:       res,
+	})
+}
+
+func (h *handler) GetAllCities(c *echo.Context) error {
+	res, err := h.s.GetAllCities(c.Request().Context())
+	if err != nil {
+		if _, ok := err.(apiresponse.ApiError); ok {
+			return err
+		}
+
+		return apiresponse.DefaultServerError()
+	}
+
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+		Success:    true,
+		StatusCode: http.StatusOK,
+		Body:       res,
 	})
 }
