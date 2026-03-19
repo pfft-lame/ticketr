@@ -1,4 +1,4 @@
-package movie
+package movies
 
 type createMovieReq struct {
 	Name        string   `json:"name" validate:"required"`

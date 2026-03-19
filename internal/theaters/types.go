@@ -1,4 +1,4 @@
-package theater
+package theaters
 
 type createTheaterReq struct {
 	Name        string `json:"name" validate:"required"`

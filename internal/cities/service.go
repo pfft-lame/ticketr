@@ -1,4 +1,4 @@
-package city
+package cities
 
 import (
 	"context"

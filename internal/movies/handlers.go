@@ -1,4 +1,4 @@
-package movie
+package movies
 
 import (
 	"net/http"

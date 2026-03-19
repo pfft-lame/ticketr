@@ -5,9 +5,9 @@ import (
 	"time"
 
 	apiresponse "ticketr/internal/api_response"
-	"ticketr/internal/city"
-	"ticketr/internal/movie"
-	"ticketr/internal/theater"
+	"ticketr/internal/cities"
+	"ticketr/internal/movies"
+	"ticketr/internal/theaters"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -29,8 +29,8 @@ func (app *application) mount() http.Handler {
 	api := e.Group("/api/v1")
 
 	// Movies
-	movieService := movie.NewService(app.queries)
-	movieHandler := movie.NewHandler(movieService)
+	movieService := movies.NewService(app.queries)
+	movieHandler := movies.NewHandler(movieService)
 
 	movies := api.Group("/movies")
 	movies.POST("", movieHandler.CreateMovie)
@@ -39,8 +39,8 @@ func (app *application) mount() http.Handler {
 	movies.PATCH("/:id", movieHandler.UpdateMovieById)
 
 	// cities
-	cityService := city.NewService(app.queries)
-	cityHandler := city.NewHandler(cityService)
+	cityService := cities.NewService(app.queries)
+	cityHandler := cities.NewHandler(cityService)
 
 	city := api.Group("/cities")
 	city.POST("", cityHandler.CreateCity)
@@ -49,8 +49,8 @@ func (app *application) mount() http.Handler {
 	city.DELETE("/:id", cityHandler.DeleteCity)
 
 	// Theaters
-	theaterService := theater.NewService(app.queries)
-	theaterHandler := theater.NewHandler(theaterService)
+	theaterService := theaters.NewService(app.queries)
+	theaterHandler := theaters.NewHandler(theaterService)
 
 	theater := api.Group("/theaters")
 	theater.POST("", theaterHandler.CreateTheater)
