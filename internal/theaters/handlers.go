@@ -19,7 +19,7 @@ func NewHandler(s Service) *handler {
 func (h *handler) CreateTheater(c *echo.Context) error {
 	var t createTheaterReq
 	if err := c.Bind(&t); err != nil {
-		return err
+		return apiresponse.InvalidRequestError()
 	}
 
 	if err := c.Validate(t); err != nil {
@@ -67,7 +67,7 @@ func (h *handler) UpdateTheater(c *echo.Context) error {
 
 	var t updateTheaterReq
 	if err := c.Bind(&t); err != nil {
-		return err
+		return apiresponse.InvalidRequestError()
 	}
 
 	if err := c.Validate(t); err != nil {

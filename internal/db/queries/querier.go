@@ -13,18 +13,23 @@ import (
 type Querier interface {
 	CreateCity(ctx context.Context, arg CreateCityParams) (CreateCityRow, error)
 	CreateMovie(ctx context.Context, arg CreateMovieParams) (CreateMovieRow, error)
+	CreateScreen(ctx context.Context, arg CreateScreenParams) (CreateScreenRow, error)
 	CreateTheater(ctx context.Context, arg CreateTheaterParams) (CreateTheaterRow, error)
 	DeleteCityById(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteMovieById(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteScreenByID(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteTheaterById(ctx context.Context, id uuid.UUID) (int64, error)
 	GetAllCities(ctx context.Context) ([]GetAllCitiesRow, error)
 	GetAllMovies(ctx context.Context) ([]GetAllMoviesRow, error)
+	GetAllScreensByTheaterId(ctx context.Context, theaterID uuid.UUID) ([]GetAllScreensByTheaterIdRow, error)
 	GetAllTheaters(ctx context.Context) ([]GetAllTheatersRow, error)
 	GetCityById(ctx context.Context, id uuid.UUID) (GetCityByIdRow, error)
 	GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdRow, error)
+	GetScreenById(ctx context.Context, id uuid.UUID) (GetScreenByIdRow, error)
 	GetTheatersByCityId(ctx context.Context, cityID uuid.UUID) ([]GetTheatersByCityIdRow, error)
 	GetTheatersById(ctx context.Context, id uuid.UUID) (GetTheatersByIdRow, error)
 	UpdateMovieById(ctx context.Context, arg UpdateMovieByIdParams) (UpdateMovieByIdRow, error)
+	UpdateScreenById(ctx context.Context, arg UpdateScreenByIdParams) (UpdateScreenByIdRow, error)
 	UpdateTheatreById(ctx context.Context, arg UpdateTheatreByIdParams) (UpdateTheatreByIdRow, error)
 }
 

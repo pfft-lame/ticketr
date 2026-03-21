@@ -7,7 +7,6 @@ import (
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
 	"ticketr/internal/db/queries"
-	"ticketr/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -62,9 +61,9 @@ func (s *svc) CreateTheater(ctx context.Context, theater createTheaterReq) (quer
 }
 
 func (s *svc) DeleteTheaterById(ctx context.Context, id string) error {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return err
+		return apiresponse.InvalidUUID()
 	}
 
 	numRows, err := s.q.DeleteTheaterById(ctx, uid)
@@ -83,9 +82,9 @@ func (s *svc) DeleteTheaterById(ctx context.Context, id string) error {
 }
 
 func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (queries.UpdateTheatreByIdRow, error) {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.UpdateTheatreByIdRow{}, err
+		return queries.UpdateTheatreByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	var cityId pgtype.UUID
@@ -123,9 +122,9 @@ func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTh
 }
 
 func (s *svc) GetTheaterById(ctx context.Context, id string) (queries.GetTheatersByIdRow, error) {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetTheatersByIdRow{}, err
+		return queries.GetTheatersByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	return s.q.GetTheatersById(ctx, uid)
@@ -136,7 +135,7 @@ func (s *svc) GetAllTheaters(ctx context.Context) ([]queries.GetAllTheatersRow, 
 }
 
 func (s *svc) GetTheatersByCity(ctx context.Context, cityId string) ([]queries.GetTheatersByCityIdRow, error) {
-	id, err := utils.ValidUUID(cityId)
+	id, err := uuid.Parse(cityId)
 	if err != nil {
 		return nil, apiresponse.ApiError{
 			StatusCode: http.StatusBadRequest,

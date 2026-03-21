@@ -10,8 +10,8 @@ import (
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
 	"ticketr/internal/db/queries"
-	"ticketr/internal/utils"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -70,9 +70,9 @@ func (s *svc) CreateMovie(ctx context.Context, movie createMovieReq) (queries.Cr
 }
 
 func (s *svc) GetMovieById(ctx context.Context, id string) (queries.GetMovieByIdRow, error) {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetMovieByIdRow{}, err
+		return queries.GetMovieByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	row, err := s.queries.GetMovieById(ctx, uid)
@@ -90,9 +90,9 @@ func (s *svc) GetMovieById(ctx context.Context, id string) (queries.GetMovieById
 }
 
 func (s *svc) DeleteMovieById(ctx context.Context, id string) error {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return err
+		return apiresponse.InvalidUUID()
 	}
 
 	numRows, err := s.queries.DeleteMovieById(ctx, uid)
@@ -111,9 +111,9 @@ func (s *svc) DeleteMovieById(ctx context.Context, id string) error {
 }
 
 func (s *svc) UpdateMovieById(ctx context.Context, movie updateMovieReq, id string) (queries.UpdateMovieByIdRow, error) {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.UpdateMovieByIdRow{}, err
+		return queries.UpdateMovieByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	var releaseDate time.Time

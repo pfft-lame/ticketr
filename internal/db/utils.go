@@ -15,3 +15,11 @@ func ToNullString(s *string) pgtype.Text {
 
 	return pgtype.Text{String: *s, Valid: true}
 }
+
+func ToNullInt32(n *int) pgtype.Int4 {
+	if n == nil {
+		return pgtype.Int4{}
+	}
+
+	return pgtype.Int4{Int32: int32(*n), Valid: true}
+}

@@ -78,6 +78,15 @@ type Movie struct {
 	NameTsv     interface{}        `json:"name_tsv"`
 }
 
+type Screen struct {
+	ID         uuid.UUID          `json:"id"`
+	Name       string             `json:"name"`
+	TheaterID  uuid.UUID          `json:"theater_id"`
+	TotalSeats int32              `json:"total_seats"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Theater struct {
 	ID          uuid.UUID          `json:"id"`
 	Name        string             `json:"name"`

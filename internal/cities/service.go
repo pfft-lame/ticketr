@@ -7,8 +7,8 @@ import (
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
 	"ticketr/internal/db/queries"
-	"ticketr/internal/utils"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -55,9 +55,9 @@ func (s *svc) CreateCity(ctx context.Context, city createCityReq) (queries.Creat
 }
 
 func (s *svc) DeleteCity(ctx context.Context, id string) error {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return err
+		return apiresponse.InvalidUUID()
 	}
 
 	numRows, err := s.q.DeleteCityById(ctx, uid)
@@ -76,9 +76,9 @@ func (s *svc) DeleteCity(ctx context.Context, id string) error {
 }
 
 func (s *svc) GetCityById(ctx context.Context, id string) (queries.GetCityByIdRow, error) {
-	uid, err := utils.ValidUUID(id)
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetCityByIdRow{}, err
+		return queries.GetCityByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	row, err := s.q.GetCityById(ctx, uid)

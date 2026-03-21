@@ -7,6 +7,7 @@ import (
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/cities"
 	"ticketr/internal/movies"
+	"ticketr/internal/screens"
 	"ticketr/internal/theaters"
 
 	"github.com/labstack/echo/v5"
@@ -59,6 +60,12 @@ func (app *application) mount() http.Handler {
 	theater.PATCH("/:id", theaterHandler.UpdateTheater)
 	theater.DELETE("/:id", theaterHandler.DeleteTheater)
 
+	// screens
+	screensService := screens.NewService(app.queries)
+	screensHandler := screens.NewHandler(screensService)
+
+	screens := api.Group("/screens")
+	screens.POST("", screensHandler.CreateScreen)
 	return e
 }
 

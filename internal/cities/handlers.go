@@ -19,7 +19,7 @@ func NewHandler(s Service) *handler {
 func (h *handler) CreateCity(c *echo.Context) error {
 	var city createCityReq
 	if err := c.Bind(&city); err != nil {
-		return err
+		return apiresponse.InvalidRequestError()
 	}
 
 	if err := c.Validate(city); err != nil {

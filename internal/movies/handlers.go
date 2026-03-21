@@ -20,7 +20,7 @@ func (h *handler) CreateMovie(c *echo.Context) error {
 	var m createMovieReq
 
 	if err := c.Bind(&m); err != nil {
-		return err
+		return apiresponse.InvalidRequestError()
 	}
 
 	if err := c.Validate(m); err != nil {
@@ -87,7 +87,7 @@ func (h *handler) UpdateMovieById(c *echo.Context) error {
 
 	var m updateMovieReq
 	if err := c.Bind(&m); err != nil {
-		return err
+		return apiresponse.InvalidRequestError()
 	}
 
 	if err := c.Validate(m); err != nil {

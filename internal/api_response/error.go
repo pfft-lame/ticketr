@@ -16,13 +16,6 @@ func (e ApiError) Error() string {
 	return fmt.Sprint(e.Body)
 }
 
-func DefaultServerError() error {
-	return ApiError{
-		StatusCode: http.StatusInternalServerError,
-		Body:       "Something went wrong!",
-	}
-}
-
 func GlobalErrorResponse(c *echo.Context, err error) {
 	if resp, uErr := echo.UnwrapResponse(c.Response()); uErr == nil {
 		if resp.Committed {
@@ -32,10 +25,19 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 
 	apiErr, ok := err.(ApiError)
 	if ok {
+		code := apiErr.StatusCode
+		var body any
+		if isEmptyBody(apiErr.Body) {
+			body = "Something went wrong!"
+			code = http.StatusInternalServerError
+		} else {
+			body = apiErr.Body
+		}
+
 		c.JSON(apiErr.StatusCode, ApiResponse{
 			Success:    false,
-			StatusCode: apiErr.StatusCode,
-			Errors:     apiErr.Body,
+			StatusCode: code,
+			Errors:     body,
 		})
 		return
 	}
@@ -54,4 +56,21 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 		StatusCode: http.StatusInternalServerError,
 		Errors:     err.Error(),
 	})
+}
+
+func isEmptyBody(body any) bool {
+	if body == nil {
+		return true
+	}
+
+	switch v := body.(type) {
+	case string:
+		return len(v) == 0
+	case map[string]string:
+		return len(v) == 0
+	case []string:
+		return len(v) == 0
+	default:
+		return false
+	}
 }
