@@ -19,7 +19,7 @@ func NewHandler(s Service) *handler {
 func (h *handler) CreateScreen(c *echo.Context) error {
 	var screen createScreenReq
 	if err := c.Bind(&screen); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(screen); err != nil {
@@ -28,11 +28,7 @@ func (h *handler) CreateScreen(c *echo.Context) error {
 
 	res, err := h.s.CreateScreen(c.Request().Context(), screen)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -48,7 +44,7 @@ func (h *handler) UpdateScreen(c *echo.Context) error {
 
 	var screen updateScreenReq
 	if err := c.Bind(&screen); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(screen); err != nil {
@@ -57,11 +53,7 @@ func (h *handler) UpdateScreen(c *echo.Context) error {
 
 	res, err := h.s.UpdateScreenId(c.Request().Context(), id, screen)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -77,11 +69,7 @@ func (h *handler) GetScreenById(c *echo.Context) error {
 
 	res, err := h.s.GetScreenById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{

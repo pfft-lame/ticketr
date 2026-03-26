@@ -43,11 +43,11 @@ func (app *application) mount() http.Handler {
 	cityService := cities.NewService(app.queries)
 	cityHandler := cities.NewHandler(cityService)
 
-	city := api.Group("/cities")
-	city.POST("", cityHandler.CreateCity)
-	city.GET("", cityHandler.GetAllCities)
-	city.GET("/:id", cityHandler.GetCity)
-	city.DELETE("/:id", cityHandler.DeleteCity)
+	cities := api.Group("/cities")
+	cities.POST("", cityHandler.CreateCity)
+	cities.GET("", cityHandler.GetAllCities)
+	cities.GET("/:id", cityHandler.GetCity)
+	cities.DELETE("/:id", cityHandler.DeleteCity)
 
 	// Theaters
 	theaterService := theaters.NewService(app.queries)

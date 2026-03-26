@@ -20,7 +20,7 @@ func (h *handler) CreateMovie(c *echo.Context) error {
 	var m createMovieReq
 
 	if err := c.Bind(&m); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(m); err != nil {
@@ -29,11 +29,7 @@ func (h *handler) CreateMovie(c *echo.Context) error {
 
 	res, err := h.s.CreateMovie(c.Request().Context(), m)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -49,11 +45,7 @@ func (h *handler) GetMovieById(c *echo.Context) error {
 
 	res, err := h.s.GetMovieById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -68,11 +60,7 @@ func (h *handler) DeleteMovieById(c *echo.Context) error {
 
 	err := h.s.DeleteMovieById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -87,7 +75,7 @@ func (h *handler) UpdateMovieById(c *echo.Context) error {
 
 	var m updateMovieReq
 	if err := c.Bind(&m); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(m); err != nil {
@@ -96,11 +84,7 @@ func (h *handler) UpdateMovieById(c *echo.Context) error {
 
 	updatedMovie, err := h.s.UpdateMovieById(c.Request().Context(), m, id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{

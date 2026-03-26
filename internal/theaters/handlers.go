@@ -19,7 +19,7 @@ func NewHandler(s Service) *handler {
 func (h *handler) CreateTheater(c *echo.Context) error {
 	var t createTheaterReq
 	if err := c.Bind(&t); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(t); err != nil {
@@ -28,11 +28,7 @@ func (h *handler) CreateTheater(c *echo.Context) error {
 
 	res, err := h.s.CreateTheater(c.Request().Context(), t)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -48,11 +44,7 @@ func (h *handler) DeleteTheater(c *echo.Context) error {
 
 	err := h.s.DeleteTheaterById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -67,7 +59,7 @@ func (h *handler) UpdateTheater(c *echo.Context) error {
 
 	var t updateTheaterReq
 	if err := c.Bind(&t); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(t); err != nil {
@@ -76,11 +68,7 @@ func (h *handler) UpdateTheater(c *echo.Context) error {
 
 	res, err := h.s.UpdateTheaterById(c.Request().Context(), id, t)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -96,11 +84,7 @@ func (h *handler) GetTheaterById(c *echo.Context) error {
 
 	res, err := h.s.GetTheaterById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -115,7 +99,7 @@ func (h *handler) GetTheaters(c *echo.Context) error {
 	if cityId == "" {
 		res, err := h.s.GetAllTheaters(c.Request().Context())
 		if err != nil {
-			return apiresponse.DefaultServerError()
+			return err
 		}
 
 		return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -127,11 +111,7 @@ func (h *handler) GetTheaters(c *echo.Context) error {
 
 	res, err := h.s.GetTheatersByCity(c.Request().Context(), cityId)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{

@@ -11,6 +11,10 @@ CREATE TABLE shows (
   CONSTRAINT valid_time CHECK ( end_time > start_time )
 );
 
+CREATE INDEX idx_start_time ON shows(start_time);
+CREATE INDEX idx_movie_id ON shows(movie_id);
+CREATE INDEX idx_screen_id ON shows(screen_id);
+
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 ALTER TABLE shows

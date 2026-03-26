@@ -3,6 +3,7 @@ package apiresponse
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/labstack/echo/v5"
 )
@@ -23,30 +24,39 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 		}
 	}
 
-	apiErr, ok := err.(ApiError)
-	if ok {
-		code := apiErr.StatusCode
-		var body any
-		if isEmptyBody(apiErr.Body) {
-			body = "Something went wrong!"
-			code = http.StatusInternalServerError
-		} else {
-			body = apiErr.Body
-		}
-
-		c.JSON(apiErr.StatusCode, ApiResponse{
+	if e, ok := err.(ApiError); ok && !isEmptyBody(e.Body) {
+		c.JSON(e.StatusCode, ApiResponse{
 			Success:    false,
-			StatusCode: code,
-			Errors:     body,
+			StatusCode: e.StatusCode,
+			Errors:     e.Body,
 		})
 		return
 	}
 
-	if echoErr, ok := err.(*echo.HTTPError); ok {
-		c.JSON(echoErr.Code, ApiResponse{
+	if e, ok := err.(*echo.HTTPError); ok {
+		c.JSON(e.Code, ApiResponse{
 			Success:    false,
-			StatusCode: echoErr.Code,
-			Errors:     echoErr.Error(),
+			StatusCode: e.Code,
+			Errors:     e.Error(),
+		})
+		return
+	}
+
+	if _, ok := err.(*echo.BindingError); ok {
+		// c.JSON(http.StatusInternalServerError, ApiResponse{
+		// 	Success:    false,
+		// 	StatusCode: http.StatusInternalServerError,
+		// 	Errors: map[string]any{
+		// 		"error":   e.Error(),
+		// 		"Message": e.Message,
+		// 		"Field":   e.Field,
+		// 		"Values":  e.Values,
+		// 	},
+		// })
+		c.JSON(http.StatusBadRequest, ApiResponse{
+			Success:    false,
+			StatusCode: http.StatusBadRequest,
+			Errors:     "Invalid request payload",
 		})
 		return
 	}
@@ -54,7 +64,7 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 	c.JSON(http.StatusInternalServerError, ApiResponse{
 		Success:    false,
 		StatusCode: http.StatusInternalServerError,
-		Errors:     err.Error(),
+		Errors:     "Something went wrong!",
 	})
 }
 
@@ -63,13 +73,18 @@ func isEmptyBody(body any) bool {
 		return true
 	}
 
-	switch v := body.(type) {
-	case string:
-		return len(v) == 0
-	case map[string]string:
-		return len(v) == 0
-	case []string:
-		return len(v) == 0
+	v := reflect.ValueOf(body)
+
+	switch v.Kind() {
+	case reflect.String:
+		return v.Len() == 0
+
+	case reflect.Map, reflect.Array, reflect.Slice:
+		return v.Len() == 0
+
+	case reflect.Pointer, reflect.Interface:
+		return v.IsNil()
+
 	default:
 		return false
 	}

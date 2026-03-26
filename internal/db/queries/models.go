@@ -87,6 +87,16 @@ type Screen struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Show struct {
+	ID        uuid.UUID `json:"id"`
+	MovieID   uuid.UUID `json:"movie_id"`
+	ScreenID  uuid.UUID `json:"screen_id"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Theater struct {
 	ID          uuid.UUID          `json:"id"`
 	Name        string             `json:"name"`

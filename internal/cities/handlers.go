@@ -19,7 +19,7 @@ func NewHandler(s Service) *handler {
 func (h *handler) CreateCity(c *echo.Context) error {
 	var city createCityReq
 	if err := c.Bind(&city); err != nil {
-		return apiresponse.InvalidRequestError()
+		return err
 	}
 
 	if err := c.Validate(city); err != nil {
@@ -28,11 +28,7 @@ func (h *handler) CreateCity(c *echo.Context) error {
 
 	res, err := h.s.CreateCity(c.Request().Context(), city)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, apiresponse.ApiResponse{
@@ -48,11 +44,7 @@ func (h *handler) DeleteCity(c *echo.Context) error {
 
 	err := h.s.DeleteCity(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -67,11 +59,7 @@ func (h *handler) GetCity(c *echo.Context) error {
 
 	res, err := h.s.GetCityById(c.Request().Context(), id)
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
@@ -84,11 +72,7 @@ func (h *handler) GetCity(c *echo.Context) error {
 func (h *handler) GetAllCities(c *echo.Context) error {
 	res, err := h.s.GetAllCities(c.Request().Context())
 	if err != nil {
-		if _, ok := err.(apiresponse.ApiError); ok {
-			return err
-		}
-
-		return apiresponse.DefaultServerError()
+		return err
 	}
 
 	return c.JSON(http.StatusOK, apiresponse.ApiResponse{

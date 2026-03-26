@@ -57,3 +57,23 @@ SELECT
   pincode
 FROM theaters
 WHERE city_id = $1;
+
+
+-- name: GetUpcomingMoviesInTheater :many
+SELECT DISTINCT
+  m.id,
+  m.name,
+  m.description,
+  m.trailer_url,
+  m.languages,
+  m.release_date,
+  sc.id AS screen_id,
+  sc.name AS screen_name
+FROM theaters t
+JOIN screens sc ON t.id = sc.theater_id
+JOIN shows s ON s.screen_id = sc.id
+JOIN movies m ON m.id = s.movie_id
+JOIN cities c ON c.id = t.city_id
+WHERE 
+  t.id = $1 AND
+  s.start_time > NOW()
