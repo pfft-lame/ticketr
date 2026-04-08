@@ -6,7 +6,7 @@ import (
 
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
-	"ticketr/internal/db/queries"
+	repo "ticketr/internal/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -14,26 +14,26 @@ import (
 )
 
 type Service interface {
-	CreateTheater(ctx context.Context, theater createTheaterReq) (queries.CreateTheaterRow, error)
+	CreateTheater(ctx context.Context, theater createTheaterReq) (repo.CreateTheaterRow, error)
 	DeleteTheaterById(ctx context.Context, id string) error
-	UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (queries.UpdateTheatreByIdRow, error)
-	GetTheaterById(ctx context.Context, id string) (queries.GetTheatersByIdRow, error)
-	GetAllTheaters(ctx context.Context) ([]queries.GetAllTheatersRow, error)
-	GetTheatersByCity(ctx context.Context, cityId string) ([]queries.GetTheatersByCityIdRow, error)
+	UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (repo.UpdateTheatreByIdRow, error)
+	GetTheaterById(ctx context.Context, id string) (repo.GetTheatersByIdRow, error)
+	GetAllTheaters(ctx context.Context) ([]repo.GetAllTheatersRow, error)
+	GetTheatersByCity(ctx context.Context, cityId string) ([]repo.GetTheatersByCityIdRow, error)
 }
 
 type svc struct {
-	q queries.Querier
+	q repo.Querier
 }
 
-func NewService(q queries.Querier) Service {
+func NewService(q repo.Querier) Service {
 	return &svc{q}
 }
 
-func (s *svc) CreateTheater(ctx context.Context, theater createTheaterReq) (queries.CreateTheaterRow, error) {
+func (s *svc) CreateTheater(ctx context.Context, theater createTheaterReq) (repo.CreateTheaterRow, error) {
 	cityId, _ := uuid.Parse(theater.CityId) // validated uuid
 
-	row, err := s.q.CreateTheater(ctx, queries.CreateTheaterParams{
+	row, err := s.q.CreateTheater(ctx, repo.CreateTheaterParams{
 		Name:        theater.Name,
 		Description: theater.Description,
 		CityID:      cityId,
@@ -43,7 +43,7 @@ func (s *svc) CreateTheater(ctx context.Context, theater createTheaterReq) (quer
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return queries.CreateTheaterRow{}, err
+			return repo.CreateTheaterRow{}, err
 		}
 
 		code := http.StatusBadRequest
@@ -51,7 +51,7 @@ func (s *svc) CreateTheater(ctx context.Context, theater createTheaterReq) (quer
 		if e.Code == db.ForeignKeyViolation && e.ConstraintName == "theaters_city_id_fkey" {
 			body["city_id"] = "Invalid city_id. The specified city doesn't exists."
 		}
-		return queries.CreateTheaterRow{}, apiresponse.ApiError{
+		return repo.CreateTheaterRow{}, apiresponse.ApiError{
 			StatusCode: code,
 			Body:       body,
 		}
@@ -81,10 +81,10 @@ func (s *svc) DeleteTheaterById(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (queries.UpdateTheatreByIdRow, error) {
+func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (repo.UpdateTheatreByIdRow, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.UpdateTheatreByIdRow{}, apiresponse.InvalidUUID()
+		return repo.UpdateTheatreByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	var cityId pgtype.UUID
@@ -92,7 +92,7 @@ func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTh
 		cityId.Scan(*theater.CityId) // validated uuid
 	}
 
-	row, err := s.q.UpdateTheatreById(ctx, queries.UpdateTheatreByIdParams{
+	row, err := s.q.UpdateTheatreById(ctx, repo.UpdateTheatreByIdParams{
 		Name:        db.ToNullString(theater.Name),
 		Description: db.ToNullString(theater.Description),
 		CityID:      cityId,
@@ -103,7 +103,7 @@ func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTh
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return queries.UpdateTheatreByIdRow{}, err
+			return repo.UpdateTheatreByIdRow{}, err
 		}
 
 		code := http.StatusBadRequest
@@ -112,7 +112,7 @@ func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTh
 			body["city_id"] = "Invalid city_id. The specified city doesn't exists."
 		}
 
-		return queries.UpdateTheatreByIdRow{}, apiresponse.ApiError{
+		return repo.UpdateTheatreByIdRow{}, apiresponse.ApiError{
 			StatusCode: code,
 			Body:       body,
 		}
@@ -121,20 +121,20 @@ func (s *svc) UpdateTheaterById(ctx context.Context, id string, theater updateTh
 	return row, nil
 }
 
-func (s *svc) GetTheaterById(ctx context.Context, id string) (queries.GetTheatersByIdRow, error) {
+func (s *svc) GetTheaterById(ctx context.Context, id string) (repo.GetTheatersByIdRow, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetTheatersByIdRow{}, apiresponse.InvalidUUID()
+		return repo.GetTheatersByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	return s.q.GetTheatersById(ctx, uid)
 }
 
-func (s *svc) GetAllTheaters(ctx context.Context) ([]queries.GetAllTheatersRow, error) {
+func (s *svc) GetAllTheaters(ctx context.Context) ([]repo.GetAllTheatersRow, error) {
 	return s.q.GetAllTheaters(ctx)
 }
 
-func (s *svc) GetTheatersByCity(ctx context.Context, cityId string) ([]queries.GetTheatersByCityIdRow, error) {
+func (s *svc) GetTheatersByCity(ctx context.Context, cityId string) ([]repo.GetTheatersByCityIdRow, error) {
 	id, err := uuid.Parse(cityId)
 	if err != nil {
 		return nil, apiresponse.ApiError{

@@ -3,10 +3,11 @@
 //   sqlc v1.30.0
 // source: theaters.sql
 
-package queries
+package repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -198,6 +199,66 @@ func (q *Queries) GetTheatersById(ctx context.Context, id uuid.UUID) (GetTheater
 		&i.Pincode,
 	)
 	return i, err
+}
+
+const getUpcomingMoviesInTheater = `-- name: GetUpcomingMoviesInTheater :many
+SELECT DISTINCT
+  m.id,
+  m.name,
+  m.description,
+  m.trailer_url,
+  m.languages,
+  m.release_date,
+  sc.id AS screen_id,
+  sc.name AS screen_name
+FROM theaters t
+JOIN screens sc ON t.id = sc.theater_id
+JOIN shows s ON s.screen_id = sc.id
+JOIN movies m ON m.id = s.movie_id
+JOIN cities c ON c.id = t.city_id
+WHERE 
+  t.id = $1 AND
+  s.start_time > NOW()
+`
+
+type GetUpcomingMoviesInTheaterRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	TrailerUrl  string    `json:"trailer_url"`
+	Languages   []string  `json:"languages"`
+	ReleaseDate time.Time `json:"release_date"`
+	ScreenID    uuid.UUID `json:"screen_id"`
+	ScreenName  string    `json:"screen_name"`
+}
+
+func (q *Queries) GetUpcomingMoviesInTheater(ctx context.Context, id uuid.UUID) ([]GetUpcomingMoviesInTheaterRow, error) {
+	rows, err := q.db.Query(ctx, getUpcomingMoviesInTheater, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUpcomingMoviesInTheaterRow
+	for rows.Next() {
+		var i GetUpcomingMoviesInTheaterRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.TrailerUrl,
+			&i.Languages,
+			&i.ReleaseDate,
+			&i.ScreenID,
+			&i.ScreenName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateTheatreById = `-- name: UpdateTheatreById :one

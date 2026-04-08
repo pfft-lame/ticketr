@@ -43,16 +43,6 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 	}
 
 	if _, ok := err.(*echo.BindingError); ok {
-		// c.JSON(http.StatusInternalServerError, ApiResponse{
-		// 	Success:    false,
-		// 	StatusCode: http.StatusInternalServerError,
-		// 	Errors: map[string]any{
-		// 		"error":   e.Error(),
-		// 		"Message": e.Message,
-		// 		"Field":   e.Field,
-		// 		"Values":  e.Values,
-		// 	},
-		// })
 		c.JSON(http.StatusBadRequest, ApiResponse{
 			Success:    false,
 			StatusCode: http.StatusBadRequest,
@@ -76,10 +66,10 @@ func isEmptyBody(body any) bool {
 	v := reflect.ValueOf(body)
 
 	switch v.Kind() {
-	case reflect.String:
+	case reflect.Map, reflect.Array, reflect.Slice:
 		return v.Len() == 0
 
-	case reflect.Map, reflect.Array, reflect.Slice:
+	case reflect.String:
 		return v.Len() == 0
 
 	case reflect.Pointer, reflect.Interface:

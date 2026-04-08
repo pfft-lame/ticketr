@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: movies.sql
 
-package queries
+package repo
 
 import (
 	"context"

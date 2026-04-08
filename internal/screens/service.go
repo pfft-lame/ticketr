@@ -6,7 +6,7 @@ import (
 
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
-	"ticketr/internal/db/queries"
+	repo "ticketr/internal/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -14,25 +14,25 @@ import (
 )
 
 type Service interface {
-	CreateScreen(ctx context.Context, screen createScreenReq) (queries.CreateScreenRow, error)
-	UpdateScreenId(ctx context.Context, id string, screen updateScreenReq) (queries.UpdateScreenByIdRow, error)
+	CreateScreen(ctx context.Context, screen createScreenReq) (repo.CreateScreenRow, error)
+	UpdateScreenId(ctx context.Context, id string, screen updateScreenReq) (repo.UpdateScreenByIdRow, error)
 	DeleteScreenById(ctx context.Context, id string) error
-	GetScreenById(ctx context.Context, id string) (queries.GetScreenByIdRow, error)
-	GetScreenByTheaterId(ctx context.Context, theaterID string) ([]queries.GetAllScreensByTheaterIdRow, error)
+	GetScreenById(ctx context.Context, id string) (repo.GetScreenByIdRow, error)
+	GetScreenByTheaterId(ctx context.Context, theaterID string) ([]repo.GetAllScreensByTheaterIdRow, error)
 }
 
 type svc struct {
-	q queries.Querier
+	q repo.Querier
 }
 
-func NewService(q queries.Querier) Service {
+func NewService(q repo.Querier) Service {
 	return &svc{q}
 }
 
-func (s *svc) CreateScreen(ctx context.Context, screen createScreenReq) (queries.CreateScreenRow, error) {
+func (s *svc) CreateScreen(ctx context.Context, screen createScreenReq) (repo.CreateScreenRow, error) {
 	theaterId, _ := uuid.Parse(screen.TheaterId) // validated uuid
 
-	row, err := s.q.CreateScreen(ctx, queries.CreateScreenParams{
+	row, err := s.q.CreateScreen(ctx, repo.CreateScreenParams{
 		Name:       screen.Name,
 		TotalSeats: int32(screen.TotalSeats),
 		TheaterID:  theaterId,
@@ -40,7 +40,7 @@ func (s *svc) CreateScreen(ctx context.Context, screen createScreenReq) (queries
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return queries.CreateScreenRow{}, err
+			return repo.CreateScreenRow{}, err
 		}
 
 		body := make(map[string]string)
@@ -51,7 +51,7 @@ func (s *svc) CreateScreen(ctx context.Context, screen createScreenReq) (queries
 			body["theater_id"] = "Invalid theater_id. The specified theater doesn't exists."
 		}
 
-		return queries.CreateScreenRow{}, apiresponse.ApiError{
+		return repo.CreateScreenRow{}, apiresponse.ApiError{
 			StatusCode: http.StatusBadRequest,
 			Body:       body,
 		}
@@ -60,10 +60,10 @@ func (s *svc) CreateScreen(ctx context.Context, screen createScreenReq) (queries
 	return row, nil
 }
 
-func (s *svc) UpdateScreenId(ctx context.Context, id string, screen updateScreenReq) (queries.UpdateScreenByIdRow, error) {
+func (s *svc) UpdateScreenId(ctx context.Context, id string, screen updateScreenReq) (repo.UpdateScreenByIdRow, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.UpdateScreenByIdRow{}, apiresponse.InvalidUUID()
+		return repo.UpdateScreenByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	var theaterId pgtype.UUID
@@ -71,7 +71,7 @@ func (s *svc) UpdateScreenId(ctx context.Context, id string, screen updateScreen
 		theaterId.Scan(*screen.TheaterId) // validated uuid
 	}
 
-	row, err := s.q.UpdateScreenById(ctx, queries.UpdateScreenByIdParams{
+	row, err := s.q.UpdateScreenById(ctx, repo.UpdateScreenByIdParams{
 		Name:       db.ToNullString(screen.Name),
 		TotalSeats: db.ToNullInt32(screen.TotalSeats),
 		TheaterID:  theaterId,
@@ -80,7 +80,7 @@ func (s *svc) UpdateScreenId(ctx context.Context, id string, screen updateScreen
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return queries.UpdateScreenByIdRow{}, err
+			return repo.UpdateScreenByIdRow{}, err
 		}
 
 		body := make(map[string]string)
@@ -91,7 +91,7 @@ func (s *svc) UpdateScreenId(ctx context.Context, id string, screen updateScreen
 			body["theater_id"] = "Invalid theater_id. The specified theater doesn't exists."
 		}
 
-		return queries.UpdateScreenByIdRow{}, apiresponse.ApiError{
+		return repo.UpdateScreenByIdRow{}, apiresponse.ApiError{
 			StatusCode: http.StatusBadRequest,
 			Body:       body,
 		}
@@ -121,16 +121,16 @@ func (s *svc) DeleteScreenById(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *svc) GetScreenById(ctx context.Context, id string) (queries.GetScreenByIdRow, error) {
+func (s *svc) GetScreenById(ctx context.Context, id string) (repo.GetScreenByIdRow, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetScreenByIdRow{}, apiresponse.InvalidUUID()
+		return repo.GetScreenByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	return s.q.GetScreenById(ctx, uid)
 }
 
-func (s *svc) GetScreenByTheaterId(ctx context.Context, theaterID string) ([]queries.GetAllScreensByTheaterIdRow, error) {
+func (s *svc) GetScreenByTheaterId(ctx context.Context, theaterID string) ([]repo.GetAllScreensByTheaterIdRow, error) {
 	uid, err := uuid.Parse(theaterID)
 	if err != nil {
 		return nil, apiresponse.InvalidUUID()

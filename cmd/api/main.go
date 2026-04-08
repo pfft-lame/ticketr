@@ -12,7 +12,7 @@ import (
 
 	"ticketr/internal/config"
 	"ticketr/internal/db"
-	"ticketr/internal/db/queries"
+	repo "ticketr/internal/repository"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("DB connection failed: %s", err)
 	}
 
-	queries := queries.New(dbInstance)
+	queries := repo.New(dbInstance)
 
 	cfg := cfg{
 		port: env.Port,

@@ -6,36 +6,36 @@ import (
 
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/db"
-	"ticketr/internal/db/queries"
+	repo "ticketr/internal/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Service interface {
-	CreateCity(ctx context.Context, city createCityReq) (queries.CreateCityRow, error)
+	CreateCity(ctx context.Context, city createCityReq) (repo.CreateCityRow, error)
 	DeleteCity(ctx context.Context, id string) error
-	GetCityById(ctx context.Context, id string) (queries.GetCityByIdRow, error)
-	GetAllCities(ctx context.Context) ([]queries.GetAllCitiesRow, error)
+	GetCityById(ctx context.Context, id string) (repo.GetCityByIdRow, error)
+	GetAllCities(ctx context.Context) ([]repo.GetAllCitiesRow, error)
 }
 
 type svc struct {
-	q queries.Querier
+	q repo.Querier
 }
 
-func NewService(q queries.Querier) Service {
+func NewService(q repo.Querier) Service {
 	return &svc{q}
 }
 
-func (s *svc) CreateCity(ctx context.Context, city createCityReq) (queries.CreateCityRow, error) {
-	row, err := s.q.CreateCity(ctx, queries.CreateCityParams{
+func (s *svc) CreateCity(ctx context.Context, city createCityReq) (repo.CreateCityRow, error) {
+	row, err := s.q.CreateCity(ctx, repo.CreateCityParams{
 		City:  city.City,
 		State: city.State,
 	})
 	if err != nil {
 		e, ok := err.(*pgconn.PgError)
 		if !ok {
-			return queries.CreateCityRow{}, err
+			return repo.CreateCityRow{}, err
 		}
 
 		code := http.StatusBadRequest
@@ -45,7 +45,7 @@ func (s *svc) CreateCity(ctx context.Context, city createCityReq) (queries.Creat
 			body["city"] = "city-state pair already exists!"
 		}
 
-		return queries.CreateCityRow{}, apiresponse.ApiError{
+		return repo.CreateCityRow{}, apiresponse.ApiError{
 			StatusCode: code,
 			Body:       body,
 		}
@@ -75,20 +75,20 @@ func (s *svc) DeleteCity(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *svc) GetCityById(ctx context.Context, id string) (queries.GetCityByIdRow, error) {
+func (s *svc) GetCityById(ctx context.Context, id string) (repo.GetCityByIdRow, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return queries.GetCityByIdRow{}, apiresponse.InvalidUUID()
+		return repo.GetCityByIdRow{}, apiresponse.InvalidUUID()
 	}
 
 	row, err := s.q.GetCityById(ctx, uid)
 	if err != nil {
-		return queries.GetCityByIdRow{}, err
+		return repo.GetCityByIdRow{}, err
 	}
 
 	return row, nil
 }
 
-func (s *svc) GetAllCities(ctx context.Context) ([]queries.GetAllCitiesRow, error) {
+func (s *svc) GetAllCities(ctx context.Context) ([]repo.GetAllCitiesRow, error) {
 	return s.q.GetAllCities(ctx)
 }

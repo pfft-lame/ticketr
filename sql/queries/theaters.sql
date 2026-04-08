@@ -76,4 +76,4 @@ JOIN movies m ON m.id = s.movie_id
 JOIN cities c ON c.id = t.city_id
 WHERE 
   t.id = $1 AND
-  s.start_time > NOW()
+  s.start_time > NOW();

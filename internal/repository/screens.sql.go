@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: screens.sql
 
-package queries
+package repo
 
 import (
 	"context"

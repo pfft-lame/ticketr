@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.30.0
 
-package queries
+package repo
 
 import (
 	"context"
@@ -29,9 +29,11 @@ type Querier interface {
 	GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdRow, error)
 	GetScreenById(ctx context.Context, id uuid.UUID) (GetScreenByIdRow, error)
 	GetShowInfoById(ctx context.Context, id uuid.UUID) (GetShowInfoByIdRow, error)
-	GetShowsByMovieId(ctx context.Context, id uuid.UUID) ([]GetShowsByMovieIdRow, error)
+	GetShowsByMovieId(ctx context.Context, movieID uuid.UUID) ([]GetShowsByMovieIdRow, error)
+	GetShowsByTheaterId(ctx context.Context, theaterID uuid.UUID) ([]GetShowsByTheaterIdRow, error)
 	GetTheatersByCityId(ctx context.Context, cityID uuid.UUID) ([]GetTheatersByCityIdRow, error)
 	GetTheatersById(ctx context.Context, id uuid.UUID) (GetTheatersByIdRow, error)
+	GetUpcomingMoviesInTheater(ctx context.Context, id uuid.UUID) ([]GetUpcomingMoviesInTheaterRow, error)
 	UpdateMovieById(ctx context.Context, arg UpdateMovieByIdParams) (UpdateMovieByIdRow, error)
 	UpdateScreenById(ctx context.Context, arg UpdateScreenByIdParams) (UpdateScreenByIdRow, error)
 	UpdateShowById(ctx context.Context, arg UpdateShowByIdParams) (UpdateShowByIdRow, error)

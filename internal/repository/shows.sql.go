@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: shows.sql
 
-package queries
+package repo
 
 import (
 	"context"
@@ -128,7 +128,9 @@ FROM movies m
 JOIN shows s ON s.movie_id = m.id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
-WHERE m.id = $1
+WHERE 
+  m.id = $1 AND
+  s.start_time > NOW()
 `
 
 type GetShowsByMovieIdRow struct {
@@ -141,8 +143,8 @@ type GetShowsByMovieIdRow struct {
 	TheaterName string    `json:"theater_name"`
 }
 
-func (q *Queries) GetShowsByMovieId(ctx context.Context, id uuid.UUID) ([]GetShowsByMovieIdRow, error) {
-	rows, err := q.db.Query(ctx, getShowsByMovieId, id)
+func (q *Queries) GetShowsByMovieId(ctx context.Context, movieID uuid.UUID) ([]GetShowsByMovieIdRow, error) {
+	rows, err := q.db.Query(ctx, getShowsByMovieId, movieID)
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +160,59 @@ func (q *Queries) GetShowsByMovieId(ctx context.Context, id uuid.UUID) ([]GetSho
 			&i.ScreenName,
 			&i.TheaterID,
 			&i.TheaterName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getShowsByTheaterId = `-- name: GetShowsByTheaterId :many
+SELECT 
+  m.id AS movie_id,
+  m.name AS movie_name,
+  sc.id AS screen_id,
+  sc.name AS screen_name,
+  s.start_time,
+  s.end_time
+FROM shows s
+JOIN movies m ON m.id = s.movie_id
+JOIN screens sc ON sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+WHERE 
+  t.id = $1 AND
+  s.screen_id > NOW()
+`
+
+type GetShowsByTheaterIdRow struct {
+	MovieID    uuid.UUID `json:"movie_id"`
+	MovieName  string    `json:"movie_name"`
+	ScreenID   uuid.UUID `json:"screen_id"`
+	ScreenName string    `json:"screen_name"`
+	StartTime  time.Time `json:"start_time"`
+	EndTime    time.Time `json:"end_time"`
+}
+
+func (q *Queries) GetShowsByTheaterId(ctx context.Context, theaterID uuid.UUID) ([]GetShowsByTheaterIdRow, error) {
+	rows, err := q.db.Query(ctx, getShowsByTheaterId, theaterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetShowsByTheaterIdRow
+	for rows.Next() {
+		var i GetShowsByTheaterIdRow
+		if err := rows.Scan(
+			&i.MovieID,
+			&i.MovieName,
+			&i.ScreenID,
+			&i.ScreenName,
+			&i.StartTime,
+			&i.EndTime,
 		); err != nil {
 			return nil, err
 		}

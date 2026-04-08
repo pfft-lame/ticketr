@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: cities.sql
 
-package queries
+package repo
 
 import (
 	"context"
