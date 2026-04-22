@@ -4,6 +4,11 @@ db-reset:
 	@goose down-to 0
 	@goose up
 
+.PHONY: db-down
+db-down:
+	@echo "Applying all DOWN migrations\n"
+	@goose down-to 0
+
 .PHONY: seed
 seed:
 	@echo "Seeding..."

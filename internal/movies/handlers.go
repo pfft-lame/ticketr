@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	apiresponse "ticketr/internal/api_response"
+	"ticketr/internal/middlewares"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
 )
 
@@ -92,5 +94,58 @@ func (h *handler) UpdateMovieById(c *echo.Context) error {
 		Success:    true,
 		Message:    "Movie updated successfully!",
 		Body:       updatedMovie,
+	})
+}
+
+func (h *handler) GetMovies(c *echo.Context) error {
+	cityId, ok := c.Get(middlewares.CITY_ID).(uuid.UUID)
+	if !ok {
+		return apiresponse.CityIdError()
+	}
+
+	query := c.QueryParam("query")
+	if query != "" {
+		res, err := h.s.GetMoviesByName(c.Request().Context(), query, cityId)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+			StatusCode: http.StatusOK,
+			Success:    true,
+			Body:       res,
+		})
+	}
+
+	/*
+		// TODO: don't allow the 'user' role to exec this
+	*/
+	res, err := h.s.GetAllMovies(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+		StatusCode: http.StatusOK,
+		Success:    true,
+		Body:       res,
+	})
+}
+
+func (h *handler) GetUpcomingMovies(c *echo.Context) error {
+	cityId, ok := c.Get(middlewares.CITY_ID).(uuid.UUID)
+	if !ok {
+		return apiresponse.CityIdError()
+	}
+
+	res, err := h.s.GetUpcomingMovies(c.Request().Context(), cityId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+		Success:    true,
+		StatusCode: http.StatusOK,
+		Body:       res,
 	})
 }

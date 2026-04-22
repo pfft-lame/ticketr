@@ -22,6 +22,9 @@ type Service interface {
 	GetMovieById(ctx context.Context, id string) (repo.GetMovieByIdRow, error)
 	DeleteMovieById(ctx context.Context, id string) error
 	UpdateMovieById(ctx context.Context, movie updateMovieReq, id string) (repo.UpdateMovieByIdRow, error)
+	GetMoviesByName(ctx context.Context, query string, cityId uuid.UUID) ([]repo.GetMoviesByNameRow, error)
+	GetUpcomingMovies(ctx context.Context, cityId uuid.UUID) ([]repo.GetUpcomingMoviesRow, error)
+	GetAllMovies(ctx context.Context) ([]repo.GetAllMoviesRow, error)
 }
 
 type svc struct {
@@ -159,4 +162,16 @@ func (s *svc) UpdateMovieById(ctx context.Context, movie updateMovieReq, id stri
 	}
 
 	return row, nil
+}
+
+func (s *svc) GetMoviesByName(ctx context.Context, query string, cityId uuid.UUID) ([]repo.GetMoviesByNameRow, error) {
+	return s.repo.GetMoviesByName(ctx, query)
+}
+
+func (s *svc) GetUpcomingMovies(ctx context.Context, cityId uuid.UUID) ([]repo.GetUpcomingMoviesRow, error) {
+	return s.repo.GetUpcomingMovies(ctx, cityId)
+}
+
+func (s *svc) GetAllMovies(ctx context.Context) ([]repo.GetAllMoviesRow, error) {
+	return s.repo.GetAllMovies(ctx)
 }

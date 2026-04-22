@@ -6,6 +6,7 @@ import (
 
 	apiresponse "ticketr/internal/api_response"
 	"ticketr/internal/cities"
+	"ticketr/internal/middlewares"
 	"ticketr/internal/movies"
 	"ticketr/internal/screens"
 	"ticketr/internal/theaters"
@@ -28,17 +29,19 @@ func (app *application) mount() http.Handler {
 	})
 
 	api := e.Group("/api/v1")
+	public := api.Group("")
+	cityPublic := api.Group("", middlewares.CityContextMiddleware)
 
 	// Movies
 	movieService := movies.NewService(app.queries)
 	movieHandler := movies.NewHandler(movieService)
 
-	movies := api.Group("/movies")
-	movies.POST("", movieHandler.CreateMovie)
-	movies.GET("/:id", movieHandler.GetMovieById)
-	movies.DELETE("/:id", movieHandler.DeleteMovieById)
-	movies.PATCH("/:id", movieHandler.UpdateMovieById)
-	movies.GET("", movieHandler.GetMovieByName)
+	public.GET("/movies/:id", movieHandler.GetMovieById)
+	public.POST("/movies", movieHandler.CreateMovie)
+	public.DELETE("/movies/:id", movieHandler.DeleteMovieById)
+	public.PATCH("/movies/:id", movieHandler.UpdateMovieById)
+	cityPublic.GET("/movies/upcoming", movieHandler.GetUpcomingMovies)
+	cityPublic.GET("/movies", movieHandler.GetMovies)
 
 	// cities
 	cityService := cities.NewService(app.queries)

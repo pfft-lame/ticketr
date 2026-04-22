@@ -93,60 +93,6 @@ func (q *Queries) DeleteMovieById(ctx context.Context, id uuid.UUID) (int64, err
 	return result.RowsAffected(), nil
 }
 
-const getAiringMovies = `-- name: GetAiringMovies :many
-SELECT 
-  m.name, m.description, casts, trailer_url, languages, release_date, director, status
-FROM movies m
-JOIN shows s on s.movie_id = m.id
-JOIN screens sc on sc.id = s.screen_id
-JOIN theaters t ON t.id = sc.theater_id
-JOIN cities c ON c.id = t.city_id
-WHERE
-  c.id = $1 AND
-  s.start_time >= NOW() AND
-  s.end_time < (CURRENT_DATE + INTERVAL '1 day')
-`
-
-type GetAiringMoviesRow struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Casts       []string      `json:"casts"`
-	TrailerUrl  string        `json:"trailer_url"`
-	Languages   []string      `json:"languages"`
-	ReleaseDate time.Time     `json:"release_date"`
-	Director    string        `json:"director"`
-	Status      ReleaseStatus `json:"status"`
-}
-
-func (q *Queries) GetAiringMovies(ctx context.Context, cityID uuid.UUID) ([]GetAiringMoviesRow, error) {
-	rows, err := q.db.Query(ctx, getAiringMovies, cityID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetAiringMoviesRow
-	for rows.Next() {
-		var i GetAiringMoviesRow
-		if err := rows.Scan(
-			&i.Name,
-			&i.Description,
-			&i.Casts,
-			&i.TrailerUrl,
-			&i.Languages,
-			&i.ReleaseDate,
-			&i.Director,
-			&i.Status,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllMovies = `-- name: GetAllMovies :many
 SELECT 
   name, description, casts, trailer_url, languages, release_date, director, status
@@ -229,11 +175,70 @@ func (q *Queries) GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdR
 	return i, err
 }
 
+const getMoviesByName = `-- name: GetMoviesByName :many
+SELECT 
+  id, name, description, casts, trailer_url, languages, release_date, director, status,
+  ts_rank(name_tsv, websearch_to_tsquery('english', $1)) AS rank
+FROM movies
+WHERE name_tsv @@ websearch_to_tsquery('english', $1)
+ORDER BY rank DESC
+`
+
+type GetMoviesByNameRow struct {
+	ID          uuid.UUID     `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Casts       []string      `json:"casts"`
+	TrailerUrl  string        `json:"trailer_url"`
+	Languages   []string      `json:"languages"`
+	ReleaseDate time.Time     `json:"release_date"`
+	Director    string        `json:"director"`
+	Status      ReleaseStatus `json:"status"`
+	Rank        float32       `json:"rank"`
+}
+
+func (q *Queries) GetMoviesByName(ctx context.Context, websearchToTsquery string) ([]GetMoviesByNameRow, error) {
+	rows, err := q.db.Query(ctx, getMoviesByName, websearchToTsquery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMoviesByNameRow
+	for rows.Next() {
+		var i GetMoviesByNameRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Casts,
+			&i.TrailerUrl,
+			&i.Languages,
+			&i.ReleaseDate,
+			&i.Director,
+			&i.Status,
+			&i.Rank,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUpcomingMovies = `-- name: GetUpcomingMovies :many
 SELECT 
-  name, description, casts, trailer_url, languages, release_date, director, status
-FROM movies
-WHERE release_date > NOW()
+  m.name, m.description, m.casts, m.trailer_url, m.languages, m.release_date, m.director, m.status
+FROM movies m
+JOIN shows s on s.movie_id = m.id
+JOIN screens sc on sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
+WHERE 
+  release_date > NOW() AND
+  c.id = $1
 `
 
 type GetUpcomingMoviesRow struct {
@@ -247,8 +252,8 @@ type GetUpcomingMoviesRow struct {
 	Status      ReleaseStatus `json:"status"`
 }
 
-func (q *Queries) GetUpcomingMovies(ctx context.Context) ([]GetUpcomingMoviesRow, error) {
-	rows, err := q.db.Query(ctx, getUpcomingMovies)
+func (q *Queries) GetUpcomingMovies(ctx context.Context, cityID uuid.UUID) ([]GetUpcomingMoviesRow, error) {
+	rows, err := q.db.Query(ctx, getUpcomingMovies, cityID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package apiresponse
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 
@@ -51,7 +52,16 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 		return
 	}
 
-	fmt.Println(err.Error())
+	if _, ok := err.(*echo.AddRouteError); ok {
+		c.JSON(http.StatusBadRequest, ApiResponse{
+			Success:    false,
+			StatusCode: http.StatusBadRequest,
+			Errors:     "invalid route",
+		})
+		return
+	}
+
+	log.Println(err.Error())
 
 	c.JSON(http.StatusInternalServerError, ApiResponse{
 		Success:    false,
