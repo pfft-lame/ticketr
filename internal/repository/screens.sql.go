@@ -59,6 +59,43 @@ func (q *Queries) DeleteScreenByID(ctx context.Context, id uuid.UUID) (int64, er
 	return result.RowsAffected(), nil
 }
 
+const getAllScreens = `-- name: GetAllScreens :many
+SELECT id, name, total_seats, theater_id
+FROM screens
+`
+
+type GetAllScreensRow struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	TotalSeats int32     `json:"total_seats"`
+	TheaterID  uuid.UUID `json:"theater_id"`
+}
+
+func (q *Queries) GetAllScreens(ctx context.Context) ([]GetAllScreensRow, error) {
+	rows, err := q.db.Query(ctx, getAllScreens)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllScreensRow
+	for rows.Next() {
+		var i GetAllScreensRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.TotalSeats,
+			&i.TheaterID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllScreensByTheaterId = `-- name: GetAllScreensByTheaterId :many
 SELECT id, name, total_seats, theater_id
 FROM screens

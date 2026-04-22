@@ -2,6 +2,7 @@ package theaters
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	apiresponse "ticketr/internal/api_response"
@@ -20,6 +21,7 @@ type Service interface {
 	GetTheaterById(ctx context.Context, id string) (repo.GetTheatersByIdRow, error)
 	GetAllTheaters(ctx context.Context) ([]repo.GetAllTheatersRow, error)
 	GetTheatersByCity(ctx context.Context, cityId uuid.UUID) ([]repo.GetTheatersByCityIdRow, error)
+	GetUpcomingMoviesInTheater(ctx context.Context, id string, cityId uuid.UUID) ([]repo.GetUpcomingMoviesInTheaterRow, error)
 }
 
 type svc struct {
@@ -141,4 +143,16 @@ func (s *svc) GetTheatersByCity(ctx context.Context, cityId uuid.UUID) ([]repo.G
 	}
 
 	return rows, nil
+}
+
+func (s *svc) GetUpcomingMoviesInTheater(ctx context.Context, id string, cityId uuid.UUID) ([]repo.GetUpcomingMoviesInTheaterRow, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		fmt.Println("here")
+		return nil, apiresponse.InvalidUUID()
+	}
+	return s.q.GetUpcomingMoviesInTheater(ctx, repo.GetUpcomingMoviesInTheaterParams{
+		ID:     uid,
+		CityID: cityId,
+	})
 }

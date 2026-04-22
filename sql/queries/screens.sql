@@ -20,6 +20,10 @@ SELECT id, name, total_seats, theater_id
 FROM screens
 WHERE id = $1;
 
+-- name: GetAllScreens :many
+SELECT id, name, total_seats, theater_id
+FROM screens;
+
 -- name: GetAllScreensByTheaterId :many
 SELECT id, name, total_seats, theater_id
 FROM screens

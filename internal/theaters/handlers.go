@@ -126,3 +126,23 @@ func (h *handler) GetTheaters(c *echo.Context) error {
 		Body:       res,
 	})
 }
+
+func (h *handler) GetUpcomingMoviesInTheater(c *echo.Context) error {
+	id := c.Param("id")
+
+	cityId, ok := c.Get(middlewares.CITY_ID).(uuid.UUID)
+	if !ok {
+		return apiresponse.CityIdError()
+	}
+
+	res, err := h.s.GetUpcomingMoviesInTheater(c.Request().Context(), id, cityId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+		Success:    true,
+		StatusCode: http.StatusOK,
+		Body:       res,
+	})
+}

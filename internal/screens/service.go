@@ -19,6 +19,7 @@ type Service interface {
 	DeleteScreenById(ctx context.Context, id string) error
 	GetScreenById(ctx context.Context, id string) (repo.GetScreenByIdRow, error)
 	GetScreenByTheaterId(ctx context.Context, theaterID string) ([]repo.GetAllScreensByTheaterIdRow, error)
+	GetAllScreens(ctx context.Context) ([]repo.GetAllScreensRow, error)
 }
 
 type svc struct {
@@ -138,3 +139,5 @@ func (s *svc) GetScreenByTheaterId(ctx context.Context, theaterID string) ([]rep
 
 	return s.q.GetAllScreensByTheaterId(ctx, uid)
 }
+
+func (s *svc) GetAllScreens(ctx context.Context) ([]repo.GetAllScreensRow, error) {}

@@ -23,6 +23,7 @@ type Querier interface {
 	DeleteTheaterById(ctx context.Context, id uuid.UUID) (int64, error)
 	GetAllCities(ctx context.Context) ([]GetAllCitiesRow, error)
 	GetAllMovies(ctx context.Context) ([]GetAllMoviesRow, error)
+	GetAllScreens(ctx context.Context) ([]GetAllScreensRow, error)
 	GetAllScreensByTheaterId(ctx context.Context, theaterID uuid.UUID) ([]GetAllScreensByTheaterIdRow, error)
 	GetAllTheaters(ctx context.Context) ([]GetAllTheatersRow, error)
 	GetCityById(ctx context.Context, id uuid.UUID) (GetCityByIdRow, error)

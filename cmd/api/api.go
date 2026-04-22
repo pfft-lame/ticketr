@@ -57,19 +57,23 @@ func (app *application) mount() http.Handler {
 	theaterService := theaters.NewService(app.queries)
 	theaterHandler := theaters.NewHandler(theaterService)
 
-	theater := api.Group("/theaters")
-	theater.POST("", theaterHandler.CreateTheater)
-	theater.GET("", theaterHandler.GetTheaters)
-	theater.GET("/:id", theaterHandler.GetTheaterById)
-	theater.PATCH("/:id", theaterHandler.UpdateTheater)
-	theater.DELETE("/:id", theaterHandler.DeleteTheater)
+	public.POST("/theaters", theaterHandler.CreateTheater)
+	cityPublic.GET("/theaters", theaterHandler.GetTheaters)
+	public.GET("/theaters/:id", theaterHandler.GetTheaterById)
+	public.PATCH("/theaters/:id", theaterHandler.UpdateTheater)
+	public.DELETE("/theaters/:id", theaterHandler.DeleteTheater)
+	cityPublic.GET("/theaters/:id/upcoming", theaterHandler.GetUpcomingMoviesInTheater)
 
 	// screens
 	screensService := screens.NewService(app.queries)
 	screensHandler := screens.NewHandler(screensService)
 
-	screens := api.Group("/screens")
-	screens.POST("", screensHandler.CreateScreen)
+	public.POST("/screens", screensHandler.CreateScreen)
+	public.GET("/screens/:id", screensHandler.GetScreenById)
+	public.PATCH("/screens/:id", screensHandler.UpdateScreen)
+	public.DELETE("/screens/:id", screensHandler.DeleteScreenById)
+	public.GET("/screens", screensHandler.GetScreens)
+
 	return e
 }
 
