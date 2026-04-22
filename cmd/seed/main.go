@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"ticketr/internal/db"
-	"ticketr/internal/db/queries"
+	repo "ticketr/internal/repository"
 
 	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("DB connection failed: %s", err)
 	}
 
-	q := queries.New(dbInstance)
+	q := repo.New(dbInstance)
 
 	cityIds := AddCities(q)
 	movies := AddMovies(q)
@@ -32,7 +32,7 @@ func main() {
 	AddShows(q, screenIds, movies)
 }
 
-func AddCities(q queries.Querier) []uuid.UUID {
+func AddCities(q repo.Querier) []uuid.UUID {
 	cityId := make([]uuid.UUID, 0, 5)
 
 	for _, s := range cities() {
@@ -47,8 +47,8 @@ func AddCities(q queries.Querier) []uuid.UUID {
 	return cityId
 }
 
-func AddMovies(q queries.Querier) []queries.CreateMovieRow {
-	moviesRows := make([]queries.CreateMovieRow, 0, 10)
+func AddMovies(q repo.Querier) []repo.CreateMovieRow {
+	moviesRows := make([]repo.CreateMovieRow, 0, 10)
 
 	for _, m := range movies() {
 		r, err := q.CreateMovie(context.Background(), m)
@@ -61,7 +61,7 @@ func AddMovies(q queries.Querier) []queries.CreateMovieRow {
 	return moviesRows
 }
 
-func AddTheaters(q queries.Querier, cityIDs []uuid.UUID) []uuid.UUID {
+func AddTheaters(q repo.Querier, cityIDs []uuid.UUID) []uuid.UUID {
 	theaterIds := make([]uuid.UUID, 0, 30)
 
 	for _, t := range theaters(cityIDs) {
@@ -76,7 +76,7 @@ func AddTheaters(q queries.Querier, cityIDs []uuid.UUID) []uuid.UUID {
 	return theaterIds
 }
 
-func AddScreens(q queries.Querier, theaterIDs []uuid.UUID) []uuid.UUID {
+func AddScreens(q repo.Querier, theaterIDs []uuid.UUID) []uuid.UUID {
 	screenIds := []uuid.UUID{}
 
 	for _, s := range screens(theaterIDs) {
@@ -91,7 +91,7 @@ func AddScreens(q queries.Querier, theaterIDs []uuid.UUID) []uuid.UUID {
 	return screenIds
 }
 
-func AddShows(q queries.Querier, screenIDs []uuid.UUID, movies []queries.CreateMovieRow) []uuid.UUID {
+func AddShows(q repo.Querier, screenIDs []uuid.UUID, movies []repo.CreateMovieRow) []uuid.UUID {
 	showIds := []uuid.UUID{}
 	for _, s := range shows(movies, screenIDs) {
 		r, err := q.CreateShow(context.Background(), s)

@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE shows (
+CREATE TABLE IF NOT EXISTS shows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   movie_id UUID NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
   screen_id UUID NOT NULL REFERENCES screens(id) ON DELETE CASCADE,
@@ -29,5 +29,5 @@ EXCLUDE USING gist (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE shows;
+DROP TABLE IF EXISTS shows;
 -- +goose StatementEnd

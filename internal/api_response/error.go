@@ -51,6 +51,8 @@ func GlobalErrorResponse(c *echo.Context, err error) {
 		return
 	}
 
+	fmt.Println(err.Error())
+
 	c.JSON(http.StatusInternalServerError, ApiResponse{
 		Success:    false,
 		StatusCode: http.StatusInternalServerError,

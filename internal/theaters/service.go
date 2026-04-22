@@ -19,7 +19,7 @@ type Service interface {
 	UpdateTheaterById(ctx context.Context, id string, theater updateTheaterReq) (repo.UpdateTheatreByIdRow, error)
 	GetTheaterById(ctx context.Context, id string) (repo.GetTheatersByIdRow, error)
 	GetAllTheaters(ctx context.Context) ([]repo.GetAllTheatersRow, error)
-	GetTheatersByCity(ctx context.Context, cityId string) ([]repo.GetTheatersByCityIdRow, error)
+	GetTheatersByCity(ctx context.Context, cityId uuid.UUID) ([]repo.GetTheatersByCityIdRow, error)
 }
 
 type svc struct {
@@ -134,16 +134,8 @@ func (s *svc) GetAllTheaters(ctx context.Context) ([]repo.GetAllTheatersRow, err
 	return s.q.GetAllTheaters(ctx)
 }
 
-func (s *svc) GetTheatersByCity(ctx context.Context, cityId string) ([]repo.GetTheatersByCityIdRow, error) {
-	id, err := uuid.Parse(cityId)
-	if err != nil {
-		return nil, apiresponse.ApiError{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid uuid for city",
-		}
-	}
-
-	rows, err := s.q.GetTheatersByCityId(ctx, id)
+func (s *svc) GetTheatersByCity(ctx context.Context, cityId uuid.UUID) ([]repo.GetTheatersByCityIdRow, error) {
+	rows, err := s.q.GetTheatersByCityId(ctx, cityId)
 	if err != nil {
 		return nil, err
 	}

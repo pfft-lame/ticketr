@@ -8,3 +8,10 @@ func InvalidUUID() error {
 		Body:       "Invalid UUID",
 	}
 }
+
+func CityIdError() error {
+	return ApiError{
+		StatusCode: http.StatusBadRequest,
+		Body:       "X-City-Id missing or invalid.",
+	}
+}

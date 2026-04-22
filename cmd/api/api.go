@@ -38,6 +38,7 @@ func (app *application) mount() http.Handler {
 	movies.GET("/:id", movieHandler.GetMovieById)
 	movies.DELETE("/:id", movieHandler.DeleteMovieById)
 	movies.PATCH("/:id", movieHandler.UpdateMovieById)
+	movies.GET("", movieHandler.GetMovieByName)
 
 	// cities
 	cityService := cities.NewService(app.queries)

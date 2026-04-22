@@ -23,6 +23,7 @@ RETURNING
 DELETE FROM shows
 WHERE id = $1;
 
+
 -- name: GetShowInfoById :one
 SELECT 
   s.id,
@@ -38,7 +39,9 @@ FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
-WHERE s.id = $1;
+JOIN cities c ON c.id = t.city_id
+WHERE 
+  c.id = sqlc.arg(city_id) AND s.id = $1;
 
 
 -- name: GetShowsByMovieId :many
@@ -54,9 +57,12 @@ FROM movies m
 JOIN shows s ON s.movie_id = m.id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
 WHERE 
+  c.id = sqlc.arg(city_id) AND
   m.id = sqlc.arg(movie_id) AND
   s.start_time > NOW();
+
 
 -- name: GetShowsByTheaterId :many
 SELECT 
@@ -70,8 +76,28 @@ FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
 WHERE 
+  c.id = sqlc.arg(city_id) AND
   t.id = sqlc.arg(theater_id) AND
   s.screen_id > NOW();
 
--- name: GetShowsBetweenTimeRange :many
+
+-- name: GetShowsByMovieBetweenTimeRange :many
+SELECT 
+  sc.id AS screen_id,
+  sc.name AS screen_name,
+  t.id AS theater_id,
+  t.name AS theater_name,
+  s.start_time,
+  s.end_time
+FROM shows s
+JOIN movies m on m.id = s.movie_id
+JOIN screens sc on sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
+WHERE
+  c.id = sqlc.arg(city_id) AND
+  m.id = sqlc.arg(movie_id) AND
+  s.start_time = sqlc.arg(start_time) AND
+  s.end_time = sqlc.arg(end_time);

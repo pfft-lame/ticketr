@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	apiresponse "ticketr/internal/api_response"
+	"ticketr/internal/middlewares"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
 )
 
@@ -94,19 +96,23 @@ func (h *handler) GetTheaterById(c *echo.Context) error {
 	})
 }
 
-func (h *handler) GetTheaters(c *echo.Context) error {
-	cityId := c.QueryParam("city")
-	if cityId == "" {
-		res, err := h.s.GetAllTheaters(c.Request().Context())
-		if err != nil {
-			return err
-		}
+func (h *handler) GetAllTheaters(c *echo.Context) error {
+	res, err := h.s.GetAllTheaters(c.Request().Context())
+	if err != nil {
+		return err
+	}
 
-		return c.JSON(http.StatusOK, apiresponse.ApiResponse{
-			Success:    true,
-			StatusCode: http.StatusOK,
-			Body:       res,
-		})
+	return c.JSON(http.StatusOK, apiresponse.ApiResponse{
+		Success:    true,
+		StatusCode: http.StatusOK,
+		Body:       res,
+	})
+}
+
+func (h *handler) GetTheaters(c *echo.Context) error {
+	cityId, ok := c.Get(middlewares.CITY_ID).(uuid.UUID)
+	if !ok {
+		return apiresponse.CityIdError()
 	}
 
 	res, err := h.s.GetTheatersByCity(c.Request().Context(), cityId)

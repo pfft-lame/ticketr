@@ -218,8 +218,14 @@ JOIN movies m ON m.id = s.movie_id
 JOIN cities c ON c.id = t.city_id
 WHERE 
   t.id = $1 AND
+  c.id = $2 AND
   s.start_time > NOW()
 `
+
+type GetUpcomingMoviesInTheaterParams struct {
+	ID     uuid.UUID `json:"id"`
+	CityID uuid.UUID `json:"city_id"`
+}
 
 type GetUpcomingMoviesInTheaterRow struct {
 	ID          uuid.UUID `json:"id"`
@@ -232,8 +238,8 @@ type GetUpcomingMoviesInTheaterRow struct {
 	ScreenName  string    `json:"screen_name"`
 }
 
-func (q *Queries) GetUpcomingMoviesInTheater(ctx context.Context, id uuid.UUID) ([]GetUpcomingMoviesInTheaterRow, error) {
-	rows, err := q.db.Query(ctx, getUpcomingMoviesInTheater, id)
+func (q *Queries) GetUpcomingMoviesInTheater(ctx context.Context, arg GetUpcomingMoviesInTheaterParams) ([]GetUpcomingMoviesInTheaterRow, error) {
+	rows, err := q.db.Query(ctx, getUpcomingMoviesInTheater, arg.ID, arg.CityID)
 	if err != nil {
 		return nil, err
 	}

@@ -56,6 +56,49 @@ func (ns NullReleaseStatus) Value() (driver.Value, error) {
 	return string(ns.ReleaseStatus), nil
 }
 
+type Roles string
+
+const (
+	RolesUser         Roles = "user"
+	RolesAdmin        Roles = "admin"
+	RolesTheaterOwner Roles = "theater_owner"
+)
+
+func (e *Roles) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Roles(s)
+	case string:
+		*e = Roles(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Roles: %T", src)
+	}
+	return nil
+}
+
+type NullRoles struct {
+	Roles Roles `json:"roles"`
+	Valid bool  `json:"valid"` // Valid is true if Roles is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoles) Scan(value interface{}) error {
+	if value == nil {
+		ns.Roles, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Roles.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoles) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Roles), nil
+}
+
 type City struct {
 	ID        uuid.UUID          `json:"id"`
 	City      string             `json:"city"`
@@ -106,4 +149,20 @@ type Theater struct {
 	Pincode     string             `json:"pincode"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type User struct {
+	ID           uuid.UUID        `json:"id"`
+	FullName     string           `json:"full_name"`
+	Email        string           `json:"email"`
+	PasswordHash string           `json:"password_hash"`
+	ProfileImage pgtype.Text      `json:"profile_image"`
+	DateOfBirth  pgtype.Date      `json:"date_of_birth"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+}
+
+type UserRole struct {
+	UserID uuid.UUID `json:"user_id"`
+	Role   Roles     `json:"role"`
 }

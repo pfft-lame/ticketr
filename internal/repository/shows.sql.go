@@ -83,8 +83,15 @@ FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
-WHERE s.id = $1
+JOIN cities c ON c.id = t.city_id
+WHERE 
+  c.id = $2 AND s.id = $1
 `
+
+type GetShowInfoByIdParams struct {
+	ID     uuid.UUID `json:"id"`
+	CityID uuid.UUID `json:"city_id"`
+}
 
 type GetShowInfoByIdRow struct {
 	ID          uuid.UUID `json:"id"`
@@ -98,8 +105,8 @@ type GetShowInfoByIdRow struct {
 	TheaterName string    `json:"theater_name"`
 }
 
-func (q *Queries) GetShowInfoById(ctx context.Context, id uuid.UUID) (GetShowInfoByIdRow, error) {
-	row := q.db.QueryRow(ctx, getShowInfoById, id)
+func (q *Queries) GetShowInfoById(ctx context.Context, arg GetShowInfoByIdParams) (GetShowInfoByIdRow, error) {
+	row := q.db.QueryRow(ctx, getShowInfoById, arg.ID, arg.CityID)
 	var i GetShowInfoByIdRow
 	err := row.Scan(
 		&i.ID,
@@ -115,6 +122,74 @@ func (q *Queries) GetShowInfoById(ctx context.Context, id uuid.UUID) (GetShowInf
 	return i, err
 }
 
+const getShowsByMovieBetweenTimeRange = `-- name: GetShowsByMovieBetweenTimeRange :many
+SELECT 
+  sc.id AS screen_id,
+  sc.name AS screen_name,
+  t.id AS theater_id,
+  t.name AS theater_name,
+  s.start_time,
+  s.end_time
+FROM shows s
+JOIN movies m on m.id = s.movie_id
+JOIN screens sc on sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
+WHERE
+  c.id = $1 AND
+  m.id = $2 AND
+  s.start_time = $3 AND
+  s.end_time = $4
+`
+
+type GetShowsByMovieBetweenTimeRangeParams struct {
+	CityID    uuid.UUID `json:"city_id"`
+	MovieID   uuid.UUID `json:"movie_id"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
+}
+
+type GetShowsByMovieBetweenTimeRangeRow struct {
+	ScreenID    uuid.UUID `json:"screen_id"`
+	ScreenName  string    `json:"screen_name"`
+	TheaterID   uuid.UUID `json:"theater_id"`
+	TheaterName string    `json:"theater_name"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+}
+
+func (q *Queries) GetShowsByMovieBetweenTimeRange(ctx context.Context, arg GetShowsByMovieBetweenTimeRangeParams) ([]GetShowsByMovieBetweenTimeRangeRow, error) {
+	rows, err := q.db.Query(ctx, getShowsByMovieBetweenTimeRange,
+		arg.CityID,
+		arg.MovieID,
+		arg.StartTime,
+		arg.EndTime,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetShowsByMovieBetweenTimeRangeRow
+	for rows.Next() {
+		var i GetShowsByMovieBetweenTimeRangeRow
+		if err := rows.Scan(
+			&i.ScreenID,
+			&i.ScreenName,
+			&i.TheaterID,
+			&i.TheaterName,
+			&i.StartTime,
+			&i.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getShowsByMovieId = `-- name: GetShowsByMovieId :many
 SELECT
   s.id,
@@ -128,10 +203,17 @@ FROM movies m
 JOIN shows s ON s.movie_id = m.id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
 WHERE 
-  m.id = $1 AND
+  c.id = $1 AND
+  m.id = $2 AND
   s.start_time > NOW()
 `
+
+type GetShowsByMovieIdParams struct {
+	CityID  uuid.UUID `json:"city_id"`
+	MovieID uuid.UUID `json:"movie_id"`
+}
 
 type GetShowsByMovieIdRow struct {
 	ID          uuid.UUID `json:"id"`
@@ -143,8 +225,8 @@ type GetShowsByMovieIdRow struct {
 	TheaterName string    `json:"theater_name"`
 }
 
-func (q *Queries) GetShowsByMovieId(ctx context.Context, movieID uuid.UUID) ([]GetShowsByMovieIdRow, error) {
-	rows, err := q.db.Query(ctx, getShowsByMovieId, movieID)
+func (q *Queries) GetShowsByMovieId(ctx context.Context, arg GetShowsByMovieIdParams) ([]GetShowsByMovieIdRow, error) {
+	rows, err := q.db.Query(ctx, getShowsByMovieId, arg.CityID, arg.MovieID)
 	if err != nil {
 		return nil, err
 	}
@@ -183,10 +265,17 @@ FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
 WHERE 
-  t.id = $1 AND
+  c.id = $1 AND
+  t.id = $2 AND
   s.screen_id > NOW()
 `
+
+type GetShowsByTheaterIdParams struct {
+	CityID    uuid.UUID `json:"city_id"`
+	TheaterID uuid.UUID `json:"theater_id"`
+}
 
 type GetShowsByTheaterIdRow struct {
 	MovieID    uuid.UUID `json:"movie_id"`
@@ -197,8 +286,8 @@ type GetShowsByTheaterIdRow struct {
 	EndTime    time.Time `json:"end_time"`
 }
 
-func (q *Queries) GetShowsByTheaterId(ctx context.Context, theaterID uuid.UUID) ([]GetShowsByTheaterIdRow, error) {
-	rows, err := q.db.Query(ctx, getShowsByTheaterId, theaterID)
+func (q *Queries) GetShowsByTheaterId(ctx context.Context, arg GetShowsByTheaterIdParams) ([]GetShowsByTheaterIdRow, error) {
+	rows, err := q.db.Query(ctx, getShowsByTheaterId, arg.CityID, arg.TheaterID)
 	if err != nil {
 		return nil, err
 	}

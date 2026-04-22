@@ -93,6 +93,60 @@ func (q *Queries) DeleteMovieById(ctx context.Context, id uuid.UUID) (int64, err
 	return result.RowsAffected(), nil
 }
 
+const getAiringMovies = `-- name: GetAiringMovies :many
+SELECT 
+  m.name, m.description, casts, trailer_url, languages, release_date, director, status
+FROM movies m
+JOIN shows s on s.movie_id = m.id
+JOIN screens sc on sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+JOIN cities c ON c.id = t.city_id
+WHERE
+  c.id = $1 AND
+  s.start_time >= NOW() AND
+  s.end_time < (CURRENT_DATE + INTERVAL '1 day')
+`
+
+type GetAiringMoviesRow struct {
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Casts       []string      `json:"casts"`
+	TrailerUrl  string        `json:"trailer_url"`
+	Languages   []string      `json:"languages"`
+	ReleaseDate time.Time     `json:"release_date"`
+	Director    string        `json:"director"`
+	Status      ReleaseStatus `json:"status"`
+}
+
+func (q *Queries) GetAiringMovies(ctx context.Context, cityID uuid.UUID) ([]GetAiringMoviesRow, error) {
+	rows, err := q.db.Query(ctx, getAiringMovies, cityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAiringMoviesRow
+	for rows.Next() {
+		var i GetAiringMoviesRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Description,
+			&i.Casts,
+			&i.TrailerUrl,
+			&i.Languages,
+			&i.ReleaseDate,
+			&i.Director,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllMovies = `-- name: GetAllMovies :many
 SELECT 
   name, description, casts, trailer_url, languages, release_date, director, status
@@ -173,6 +227,53 @@ func (q *Queries) GetMovieById(ctx context.Context, id uuid.UUID) (GetMovieByIdR
 		&i.Status,
 	)
 	return i, err
+}
+
+const getUpcomingMovies = `-- name: GetUpcomingMovies :many
+SELECT 
+  name, description, casts, trailer_url, languages, release_date, director, status
+FROM movies
+WHERE release_date > NOW()
+`
+
+type GetUpcomingMoviesRow struct {
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Casts       []string      `json:"casts"`
+	TrailerUrl  string        `json:"trailer_url"`
+	Languages   []string      `json:"languages"`
+	ReleaseDate time.Time     `json:"release_date"`
+	Director    string        `json:"director"`
+	Status      ReleaseStatus `json:"status"`
+}
+
+func (q *Queries) GetUpcomingMovies(ctx context.Context) ([]GetUpcomingMoviesRow, error) {
+	rows, err := q.db.Query(ctx, getUpcomingMovies)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUpcomingMoviesRow
+	for rows.Next() {
+		var i GetUpcomingMoviesRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Description,
+			&i.Casts,
+			&i.TrailerUrl,
+			&i.Languages,
+			&i.ReleaseDate,
+			&i.Director,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateMovieById = `-- name: UpdateMovieById :one
