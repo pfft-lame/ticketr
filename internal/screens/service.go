@@ -140,4 +140,6 @@ func (s *svc) GetScreenByTheaterId(ctx context.Context, theaterID string) ([]rep
 	return s.q.GetAllScreensByTheaterId(ctx, uid)
 }
 
-func (s *svc) GetAllScreens(ctx context.Context) ([]repo.GetAllScreensRow, error) {}
+func (s *svc) GetAllScreens(ctx context.Context) ([]repo.GetAllScreensRow, error) {
+	return s.q.GetAllScreens(ctx)
+}

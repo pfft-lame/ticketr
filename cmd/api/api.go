@@ -9,6 +9,7 @@ import (
 	"ticketr/internal/middlewares"
 	"ticketr/internal/movies"
 	"ticketr/internal/screens"
+	"ticketr/internal/shows"
 	"ticketr/internal/theaters"
 
 	"github.com/labstack/echo/v5"
@@ -73,6 +74,16 @@ func (app *application) mount() http.Handler {
 	public.PATCH("/screens/:id", screensHandler.UpdateScreen)
 	public.DELETE("/screens/:id", screensHandler.DeleteScreenById)
 	public.GET("/screens", screensHandler.GetScreens)
+
+	// shows
+	showsService := shows.NewService(app.queries)
+	showsHandler := shows.NewHandler(showsService)
+
+	public.POST("/shows", showsHandler.CreateShow)
+	public.PATCH("/shows/:id", showsHandler.UpdateShow)
+	public.DELETE("/shows/:id", showsHandler.DeleteShow)
+	public.GET("/shows/:id", showsHandler.GetShowsById)
+	cityPublic.GET("/shows", showsHandler.GetShows)
 
 	return e
 }

@@ -1,6 +1,11 @@
 package db
 
-import "github.com/jackc/pgx/v5/pgtype"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
 
 func ToNullString(s *string) pgtype.Text {
 	if s == nil {
@@ -22,4 +27,20 @@ func ToNullInt32(n *int) pgtype.Int4 {
 	}
 
 	return pgtype.Int4{Int32: int32(*n), Valid: true}
+}
+
+func ToPgTimeTz(t *time.Time) pgtype.Timestamptz {
+	if t == nil {
+		return pgtype.Timestamptz{}
+	}
+
+	return pgtype.Timestamptz{Time: *t, Valid: true}
+}
+
+func ToPgUUID(id *uuid.UUID) pgtype.UUID {
+	if id == nil {
+		return pgtype.UUID{Valid: false}
+	}
+
+	return pgtype.UUID{Valid: true, Bytes: *id}
 }

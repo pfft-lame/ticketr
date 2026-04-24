@@ -33,15 +33,14 @@ SELECT
   s.movie_id,
   m.name AS movie_name,
   sc.name AS screen_name,
+  sc.id AS screen_id,
   t.id AS theater_id,
   t.name AS theater_name
 FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
 JOIN theaters t ON t.id = sc.theater_id
-JOIN cities c ON c.id = t.city_id
-WHERE 
-  c.id = sqlc.arg(city_id) AND s.id = $1;
+WHERE s.id = $1;
 
 
 -- name: GetShowsByMovieId :many
@@ -50,7 +49,9 @@ SELECT
   s.start_time,
   s.end_time,
   s.screen_id,
+  m.name AS movie_name,
   sc.name AS screen_name,
+  sc.id AS screen_id,
   t.id AS theater_id,
   t.name AS theater_name
 FROM movies m
@@ -70,8 +71,29 @@ SELECT
   m.name AS movie_name,
   sc.id AS screen_id,
   sc.name AS screen_name,
+  t.name AS theater_name,
+  s.id AS show_id,
   s.start_time,
   s.end_time
+FROM shows s
+JOIN movies m ON m.id = s.movie_id
+JOIN screens sc ON sc.id = s.screen_id
+JOIN theaters t ON t.id = sc.theater_id
+WHERE 
+  t.id = sqlc.arg(theater_id) AND
+  s.start_time > NOW();
+
+-- name: GetShowsByCityId :many
+SELECT 
+  m.id AS movie_id,
+  m.name AS movie_name,
+  sc.id AS screen_id,
+  sc.name AS screen_name,
+  s.id AS show_id,
+  s.start_time,
+  s.end_time,
+  t.id AS theater_id,
+  t.name AS theater_name
 FROM shows s
 JOIN movies m ON m.id = s.movie_id
 JOIN screens sc ON sc.id = s.screen_id
@@ -79,25 +101,4 @@ JOIN theaters t ON t.id = sc.theater_id
 JOIN cities c ON c.id = t.city_id
 WHERE 
   c.id = sqlc.arg(city_id) AND
-  t.id = sqlc.arg(theater_id) AND
-  s.screen_id > NOW();
-
-
--- name: GetShowsByMovieBetweenTimeRange :many
-SELECT 
-  sc.id AS screen_id,
-  sc.name AS screen_name,
-  t.id AS theater_id,
-  t.name AS theater_name,
-  s.start_time,
-  s.end_time
-FROM shows s
-JOIN movies m on m.id = s.movie_id
-JOIN screens sc on sc.id = s.screen_id
-JOIN theaters t ON t.id = sc.theater_id
-JOIN cities c ON c.id = t.city_id
-WHERE
-  c.id = sqlc.arg(city_id) AND
-  m.id = sqlc.arg(movie_id) AND
-  s.start_time = sqlc.arg(start_time) AND
-  s.end_time = sqlc.arg(end_time);
+  s.start_time > NOW();
